@@ -1,0 +1,113 @@
+// Runtime Scheduler
+
+forge RuntimeSchedulerErrors {
+    const ERR_OK: UInt32 = 0;
+    const ERR_NO_TASKS: UInt32 = 1;
+    const ERR_INVALID_PRIORITY: UInt32 = 2;
+    const ERR_SCHEDULER_NOT_RUNNING: UInt32 = 3;
+    const ERR_DOMAIN_NOT_AVAILABLE: UInt32 = 100;
+}
+
+forge RuntimeScheduler {
+    
+    const MAX_PRIORITY: UInt32 = 10;
+    const MIN_PRIORITY: UInt32 = 0;
+    const DEFAULT_PRIORITY: UInt32 = 5;
+    const TIME_SLICE_MS: UInt32 = 10;
+    
+    proc K::init() -> UInt32 {
+        return 0;
+    }
+    
+    proc K::start() -> UInt32 {
+        return 0;
+    }
+    
+    proc K::stop() -> UInt32 {
+        return 0;
+    }
+    
+    proc K::add_task(pid: UInt32, priority: UInt32) -> UInt32 {
+        return 0;
+    }
+    
+    proc K::remove_task(pid: UInt32) -> UInt32 {
+        return 0;
+    }
+    
+    proc K::set_priority(pid: UInt32, priority: UInt32) -> UInt32 {
+        return 0;
+    }
+    
+    proc K::get_current_task() -> UInt32 {
+        return 1;
+    }
+    
+    proc K::schedule() -> UInt32 {
+        return 0;
+    }
+    
+    proc Q::init() -> UInt32 {
+        return 100;
+    }
+    
+    proc Q::start() -> UInt32 {
+        return 100;
+    }
+    
+    proc Q::stop() -> UInt32 {
+        return 100;
+    }
+    
+    proc Q::add_task(pid: UInt32, priority: UInt32) -> UInt32 {
+        return 100;
+    }
+    
+    proc Q::remove_task(pid: UInt32) -> UInt32 {
+        return 100;
+    }
+    
+    proc Q::set_priority(pid: UInt32, priority: UInt32) -> UInt32 {
+        return 100;
+    }
+    
+    proc Q::get_current_task() -> UInt32 {
+        return 1;
+    }
+    
+    proc Q::schedule() -> UInt32 {
+        return 100;
+    }
+    
+    proc Phi::init() -> UInt32 {
+        return 100;
+    }
+    
+    proc Phi::start() -> UInt32 {
+        return 100;
+    }
+    
+    proc Phi::stop() -> UInt32 {
+        return 100;
+    }
+    
+    proc Phi::add_task(pid: UInt32, priority: UInt32) -> UInt32 {
+        return 100;
+    }
+    
+    proc Phi::remove_task(pid: UInt32) -> UInt32 {
+        return 100;
+    }
+    
+    proc Phi::set_priority(pid: UInt32, priority: UInt32) -> UInt32 {
+        return 100;
+    }
+    
+    proc Phi::get_current_task() -> UInt32 {
+        return 1;
+    }
+    
+    proc Phi::schedule() -> UInt32 {
+        return 100;
+    }
+}

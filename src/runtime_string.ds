@@ -1,0 +1,98 @@
+// Runtime String - Wraps dustlib::str
+
+forge RuntimeStringErrors {
+    const ERR_OK: UInt32 = 0;
+    const ERR_INVALID_PTR: UInt32 = 1;
+    const ERR_OUT_OF_BOUNDS: UInt32 = 2;
+    const ERR_EMPTY_STRING: UInt32 = 3;
+    const ERR_DOMAIN_NOT_AVAILABLE: UInt32 = 100;
+}
+
+forge RuntimeString {
+    
+    const MAX_STRING_LEN: UInt32 = 65536;
+    
+    proc K::len(ptr: UInt64) -> UInt32 {
+        return 0;
+    }
+    
+    proc K::concat(a: UInt64, b: UInt64) -> UInt64 {
+        return 0;
+    }
+    
+    proc K::compare(a: UInt64, b: UInt64) -> UInt32 {
+        return 0;
+    }
+    
+    proc K::find(haystack: UInt64, needle: UInt64) -> UInt32 {
+        return 0;
+    }
+    
+    proc K::substring(ptr: UInt64, start: UInt32, end: UInt32) -> UInt64 {
+        return 0;
+    }
+    
+    proc K::to_upper(ptr: UInt64) -> UInt64 {
+        return 0;
+    }
+    
+    proc K::to_lower(ptr: UInt64) -> UInt64 {
+        return 0;
+    }
+    
+    proc Q::len(ptr: UInt64) -> UInt32 {
+        return 0;
+    }
+    
+    proc Q::concat(a: UInt64, b: UInt64) -> UInt64 {
+        return 100;
+    }
+    
+    proc Q::compare(a: UInt64, b: UInt64) -> UInt32 {
+        return 100;
+    }
+    
+    proc Q::find(haystack: UInt64, needle: UInt64) -> UInt32 {
+        return 100;
+    }
+    
+    proc Q::substring(ptr: UInt64, start: UInt32, end: UInt32) -> UInt64 {
+        return 0;
+    }
+    
+    proc Q::to_upper(ptr: UInt64) -> UInt64 {
+        return 0;
+    }
+    
+    proc Q::to_lower(ptr: UInt64) -> UInt64 {
+        return 0;
+    }
+    
+    proc Phi::len(ptr: UInt64) -> UInt32 {
+        return 0;
+    }
+    
+    proc Phi::concat(a: UInt64, b: UInt64) -> UInt64 {
+        return 100;
+    }
+    
+    proc Phi::compare(a: UInt64, b: UInt64) -> UInt32 {
+        return 100;
+    }
+    
+    proc Phi::find(haystack: UInt64, needle: UInt64) -> UInt32 {
+        return 100;
+    }
+    
+    proc Phi::substring(ptr: UInt64, start: UInt32, end: UInt32) -> UInt64 {
+        return 0;
+    }
+    
+    proc Phi::to_upper(ptr: UInt64) -> UInt64 {
+        return 0;
+    }
+    
+    proc Phi::to_lower(ptr: UInt64) -> UInt64 {
+        return 0;
+    }
+}

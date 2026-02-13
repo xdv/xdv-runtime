@@ -1,0 +1,76 @@
+// Runtime Memory - Wraps dustlib_k::memory
+
+forge RuntimeMemoryErrors {
+    const ERR_OK: UInt32 = 0;
+    const ERR_ALLOC_FAILED: UInt32 = 1;
+    const ERR_FREE_FAILED: UInt32 = 2;
+    const ERR_INVALID_POINTER: UInt32 = 3;
+    const ERR_OUT_OF_MEMORY: UInt32 = 4;
+    const ERR_DOMAIN_NOT_AVAILABLE: UInt32 = 100;
+}
+
+forge RuntimeMemory {
+    
+    const PAGE_SIZE: UInt32 = 4096;
+    const MAX_HEAP_SIZE: UInt64 = 16777216;
+    
+    proc K::alloc(size: UInt32) -> UInt64 {
+        return 0;
+    }
+    
+    proc K::free(ptr: UInt64) -> UInt32 {
+        return 0;
+    }
+    
+    proc K::zero_alloc(size: UInt32) -> UInt64 {
+        return 0;
+    }
+    
+    proc K::copy(dest: UInt64, src: UInt64, size: UInt32) -> UInt32 {
+        return 0;
+    }
+    
+    proc K::set(ptr: UInt64, value: UInt8, size: UInt32) -> UInt32 {
+        return 0;
+    }
+    
+    proc Q::alloc(size: UInt32) -> UInt64 {
+        return 0;
+    }
+    
+    proc Q::free(ptr: UInt64) -> UInt32 {
+        return 100;
+    }
+    
+    proc Q::zero_alloc(size: UInt32) -> UInt64 {
+        return 0;
+    }
+    
+    proc Q::copy(dest: UInt64, src: UInt64, size: UInt32) -> UInt32 {
+        return 100;
+    }
+    
+    proc Q::set(ptr: UInt64, value: UInt8, size: UInt32) -> UInt32 {
+        return 100;
+    }
+    
+    proc Phi::alloc(size: UInt32) -> UInt64 {
+        return 0;
+    }
+    
+    proc Phi::free(ptr: UInt64) -> UInt32 {
+        return 100;
+    }
+    
+    proc Phi::zero_alloc(size: UInt32) -> UInt64 {
+        return 0;
+    }
+    
+    proc Phi::copy(dest: UInt64, src: UInt64, size: UInt32) -> UInt32 {
+        return 100;
+    }
+    
+    proc Phi::set(ptr: UInt64, value: UInt8, size: UInt32) -> UInt32 {
+        return 100;
+    }
+}

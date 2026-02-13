@@ -1,0 +1,141 @@
+// Runtime Console - Console I/O
+
+forge RuntimeConsoleErrors {
+    const ERR_OK: UInt32 = 0;
+    const ERR_INVALID_COORD: UInt32 = 1;
+    const ERR_OUT_OF_RANGE: UInt32 = 2;
+    const ERR_DOMAIN_NOT_AVAILABLE: UInt32 = 100;
+}
+
+forge RuntimeConsole {
+    
+    const VGA_ADDR: UInt64 = 18432;
+    const VGA_WIDTH: UInt32 = 80;
+    const VGA_HEIGHT: UInt32 = 25;
+    const VGA_SIZE: UInt32 = 4000;
+    
+    const COLOR_BLACK: UInt8 = 0;
+    const COLOR_BLUE: UInt8 = 1;
+    const COLOR_GREEN: UInt8 = 2;
+    const COLOR_CYAN: UInt8 = 3;
+    const COLOR_RED: UInt8 = 4;
+    const COLOR_MAGENTA: UInt8 = 5;
+    const COLOR_BROWN: UInt8 = 6;
+    const COLOR_LIGHT_GRAY: UInt8 = 7;
+    const COLOR_DARK_GRAY: UInt8 = 8;
+    const COLOR_LIGHT_BLUE: UInt8 = 9;
+    const COLOR_LIGHT_GREEN: UInt8 = 10;
+    const COLOR_LIGHT_CYAN: UInt8 = 11;
+    const COLOR_LIGHT_RED: UInt8 = 12;
+    const COLOR_LIGHT_MAGENTA: UInt8 = 13;
+    const COLOR_YELLOW: UInt8 = 14;
+    const COLOR_WHITE: UInt8 = 15;
+    
+    proc K::putchar(ch: UInt8) -> UInt32 {
+        return 0;
+    }
+    
+    proc K::puts(ptr: UInt64) -> UInt32 {
+        return 0;
+    }
+    
+    proc K::getchar() -> UInt32 {
+        return 0;
+    }
+    
+    proc K::clear() -> UInt32 {
+        return 0;
+    }
+    
+    proc K::set_cursor(row: UInt32, col: UInt32) -> UInt32 {
+        return 0;
+    }
+    
+    proc K::get_cursor_row() -> UInt32 {
+        return 0;
+    }
+    
+    proc K::get_cursor_col() -> UInt32 {
+        return 0;
+    }
+    
+    proc K::scroll() -> UInt32 {
+        return 0;
+    }
+    
+    proc K::set_color(fg: UInt8, bg: UInt8) -> UInt32 {
+        return 0;
+    }
+    
+    proc Q::putchar(ch: UInt8) -> UInt32 {
+        return 100;
+    }
+    
+    proc Q::puts(ptr: UInt64) -> UInt32 {
+        return 100;
+    }
+    
+    proc Q::getchar() -> UInt32 {
+        return 100;
+    }
+    
+    proc Q::clear() -> UInt32 {
+        return 100;
+    }
+    
+    proc Q::set_cursor(row: UInt32, col: UInt32) -> UInt32 {
+        return 100;
+    }
+    
+    proc Q::get_cursor_row() -> UInt32 {
+        return 0;
+    }
+    
+    proc Q::get_cursor_col() -> UInt32 {
+        return 0;
+    }
+    
+    proc Q::scroll() -> UInt32 {
+        return 100;
+    }
+    
+    proc Q::set_color(fg: UInt8, bg: UInt8) -> UInt32 {
+        return 100;
+    }
+    
+    proc Phi::putchar(ch: UInt8) -> UInt32 {
+        return 100;
+    }
+    
+    proc Phi::puts(ptr: UInt64) -> UInt32 {
+        return 100;
+    }
+    
+    proc Phi::getchar() -> UInt32 {
+        return 100;
+    }
+    
+    proc Phi::clear() -> UInt32 {
+        return 100;
+    }
+    
+    proc Phi::set_cursor(row: UInt32, col: UInt32) -> UInt32 {
+        return 100;
+    }
+    
+    proc Phi::get_cursor_row() -> UInt32 {
+        return 0;
+    }
+    
+    proc Phi::get_cursor_col() -> UInt32 {
+        return 0;
+    }
+    
+    proc Phi::scroll() -> UInt32 {
+        return 100;
+    }
+    
+    proc Phi::set_color(fg: UInt8, bg: UInt8) -> UInt32 {
+        return 100;
+    }
+}

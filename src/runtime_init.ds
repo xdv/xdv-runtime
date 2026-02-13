@@ -1,0 +1,112 @@
+// Runtime Init - Init Process (PID 1)
+
+forge RuntimeInitErrors {
+    const ERR_OK: UInt32 = 0;
+    const ERR_INIT_FAILED: UInt32 = 1;
+    const ERR_FORK_FAILED: UInt32 = 2;
+    const ERR_EXEC_FAILED: UInt32 = 3;
+    const ERR_WAIT_FAILED: UInt32 = 4;
+    const ERR_DOMAIN_NOT_AVAILABLE: UInt32 = 100;
+}
+
+forge RuntimeInit {
+    
+    const INIT_PID: UInt32 = 1;
+    const INIT_STACK_SIZE: UInt32 = 8192;
+    
+    proc K::main() -> UInt32 {
+        return 0;
+    }
+    
+    proc K::init_fs() -> UInt32 {
+        return 0;
+    }
+    
+    proc K::init_scheduler() -> UInt32 {
+        return 0;
+    }
+    
+    proc K::init_console() -> UInt32 {
+        return 0;
+    }
+    
+    proc K::spawn_shell() -> UInt32 {
+        return 0;
+    }
+    
+    proc K::wait_for_child(pid: UInt32) -> UInt32 {
+        return 0;
+    }
+    
+    proc K::reap_zombies() -> UInt32 {
+        return 0;
+    }
+    
+    proc K::handle_signal(sig: UInt32) -> UInt32 {
+        return 0;
+    }
+    
+    proc Q::main() -> UInt32 {
+        return 100;
+    }
+    
+    proc Q::init_fs() -> UInt32 {
+        return 100;
+    }
+    
+    proc Q::init_scheduler() -> UInt32 {
+        return 100;
+    }
+    
+    proc Q::init_console() -> UInt32 {
+        return 100;
+    }
+    
+    proc Q::spawn_shell() -> UInt32 {
+        return 100;
+    }
+    
+    proc Q::wait_for_child(pid: UInt32) -> UInt32 {
+        return 100;
+    }
+    
+    proc Q::reap_zombies() -> UInt32 {
+        return 100;
+    }
+    
+    proc Q::handle_signal(sig: UInt32) -> UInt32 {
+        return 100;
+    }
+    
+    proc Phi::main() -> UInt32 {
+        return 100;
+    }
+    
+    proc Phi::init_fs() -> UInt32 {
+        return 100;
+    }
+    
+    proc Phi::init_scheduler() -> UInt32 {
+        return 100;
+    }
+    
+    proc Phi::init_console() -> UInt32 {
+        return 100;
+    }
+    
+    proc Phi::spawn_shell() -> UInt32 {
+        return 100;
+    }
+    
+    proc Phi::wait_for_child(pid: UInt32) -> UInt32 {
+        return 100;
+    }
+    
+    proc Phi::reap_zombies() -> UInt32 {
+        return 100;
+    }
+    
+    proc Phi::handle_signal(sig: UInt32) -> UInt32 {
+        return 100;
+    }
+}

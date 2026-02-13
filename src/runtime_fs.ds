@@ -1,0 +1,156 @@
+// Runtime FS - File System Interface (wraps xdvfs)
+
+forge RuntimeFsErrors {
+    const ERR_OK: UInt32 = 0;
+    const ERR_MOUNT_FAILED: UInt32 = 1;
+    const ERR_UMOUNT_FAILED: UInt32 = 2;
+    const ERR_OPEN_FAILED: UInt32 = 3;
+    const ERR_READ_FAILED: UInt32 = 4;
+    const ERR_WRITE_FAILED: UInt32 = 5;
+    const ERR_CLOSE_FAILED: UInt32 = 6;
+    const ERR_NOT_FOUND: UInt32 = 7;
+    const ERR_EXISTS: UInt32 = 8;
+    const ERR_IS_DIRECTORY: UInt32 = 9;
+    const ERR_NOT_DIRECTORY: UInt32 = 10;
+    const ERR_PERMISSION: UInt32 = 11;
+    const ERR_NO_SPACE: UInt32 = 12;
+    const ERR_DOMAIN_NOT_AVAILABLE: UInt32 = 100;
+}
+
+forge RuntimeFs {
+    
+    const MAX_OPEN_FILES: UInt32 = 64;
+    const MAX_PATH_LEN: UInt32 = 256;
+    
+    proc K::mount(device: UInt64, mount_point: UInt64) -> UInt32 {
+        return 0;
+    }
+    
+    proc K::umount(mount_point: UInt64) -> UInt32 {
+        return 0;
+    }
+    
+    proc K::open(path: UInt64, flags: UInt32) -> UInt64 {
+        return 0;
+    }
+    
+    proc K::read(fd: UInt64, buffer: UInt64, size: UInt32) -> UInt32 {
+        return 0;
+    }
+    
+    proc K::write(fd: UInt64, buffer: UInt64, size: UInt32) -> UInt32 {
+        return 0;
+    }
+    
+    proc K::close(fd: UInt64) -> UInt32 {
+        return 0;
+    }
+    
+    proc K::stat(path: UInt64, stat_buf: UInt64) -> UInt32 {
+        return 0;
+    }
+    
+    proc K::mkdir(path: UInt64, mode: UInt32) -> UInt32 {
+        return 0;
+    }
+    
+    proc K::rmdir(path: UInt64) -> UInt32 {
+        return 0;
+    }
+    
+    proc K::unlink(path: UInt64) -> UInt32 {
+        return 0;
+    }
+    
+    proc K::readdir(dir: UInt64, entry: UInt64) -> UInt32 {
+        return 0;
+    }
+    
+    proc Q::mount(device: UInt64, mount_point: UInt64) -> UInt32 {
+        return 100;
+    }
+    
+    proc Q::umount(mount_point: UInt64) -> UInt32 {
+        return 100;
+    }
+    
+    proc Q::open(path: UInt64, flags: UInt32) -> UInt64 {
+        return 0;
+    }
+    
+    proc Q::read(fd: UInt64, buffer: UInt64, size: UInt32) -> UInt32 {
+        return 100;
+    }
+    
+    proc Q::write(fd: UInt64, buffer: UInt64, size: UInt32) -> UInt32 {
+        return 100;
+    }
+    
+    proc Q::close(fd: UInt64) -> UInt32 {
+        return 100;
+    }
+    
+    proc Q::stat(path: UInt64, stat_buf: UInt64) -> UInt32 {
+        return 100;
+    }
+    
+    proc Q::mkdir(path: UInt64, mode: UInt32) -> UInt32 {
+        return 100;
+    }
+    
+    proc Q::rmdir(path: UInt64) -> UInt32 {
+        return 100;
+    }
+    
+    proc Q::unlink(path: UInt64) -> UInt32 {
+        return 100;
+    }
+    
+    proc Q::readdir(dir: UInt64, entry: UInt64) -> UInt32 {
+        return 100;
+    }
+    
+    proc Phi::mount(device: UInt64, mount_point: UInt64) -> UInt32 {
+        return 100;
+    }
+    
+    proc Phi::umount(mount_point: UInt64) -> UInt32 {
+        return 100;
+    }
+    
+    proc Phi::open(path: UInt64, flags: UInt32) -> UInt64 {
+        return 0;
+    }
+    
+    proc Phi::read(fd: UInt64, buffer: UInt64, size: UInt32) -> UInt32 {
+        return 100;
+    }
+    
+    proc Phi::write(fd: UInt64, buffer: UInt64, size: UInt32) -> UInt32 {
+        return 100;
+    }
+    
+    proc Phi::close(fd: UInt64) -> UInt32 {
+        return 100;
+    }
+    
+    proc Phi::stat(path: UInt64, stat_buf: UInt64) -> UInt32 {
+        return 100;
+    }
+    
+    proc Phi::mkdir(path: UInt64, mode: UInt32) -> UInt32 {
+        return 100;
+    }
+    
+    proc Phi::rmdir(path: UInt64) -> UInt32 {
+        return 100;
+    }
+    
+    proc Phi::unlink(path: UInt64) -> UInt32 {
+        return 100;
+    }
+    
+    proc Phi::readdir(dir: UInt64, entry: UInt64) -> UInt32 {
+        return 100;
+    }
+}

@@ -1,0 +1,65 @@
+// Runtime I/O - Wraps dustlib_k::io
+
+forge RuntimeIoErrors {
+    const ERR_OK: UInt32 = 0;
+    const ERR_OPEN_FAILED: UInt32 = 1;
+    const ERR_READ_FAILED: UInt32 = 2;
+    const ERR_WRITE_FAILED: UInt32 = 3;
+    const ERR_CLOSE_FAILED: UInt32 = 4;
+    const ERR_INVALID_HANDLE: UInt32 = 5;
+    const ERR_NOT_IMPLEMENTED: UInt32 = 6;
+    const ERR_DOMAIN_NOT_AVAILABLE: UInt32 = 100;
+}
+
+forge RuntimeIo {
+    
+    const MAX_OPEN_FILES: UInt32 = 64;
+    
+    proc K::open(path: UInt64, mode: UInt32) -> UInt64 {
+        return 0;
+    }
+    
+    proc K::read(fd: UInt64, buffer: UInt64, size: UInt32) -> UInt32 {
+        return 0;
+    }
+    
+    proc K::write(fd: UInt64, buffer: UInt64, size: UInt32) -> UInt32 {
+        return 0;
+    }
+    
+    proc K::close(fd: UInt64) -> UInt32 {
+        return 0;
+    }
+    
+    proc Q::open(path: UInt64, mode: UInt32) -> UInt64 {
+        return 0;
+    }
+    
+    proc Q::read(fd: UInt64, buffer: UInt64, size: UInt32) -> UInt32 {
+        return 100;
+    }
+    
+    proc Q::write(fd: UInt64, buffer: UInt64, size: UInt32) -> UInt32 {
+        return 100;
+    }
+    
+    proc Q::close(fd: UInt64) -> UInt32 {
+        return 100;
+    }
+    
+    proc Phi::open(path: UInt64, mode: UInt32) -> UInt64 {
+        return 0;
+    }
+    
+    proc Phi::read(fd: UInt64, buffer: UInt64, size: UInt32) -> UInt32 {
+        return 100;
+    }
+    
+    proc Phi::write(fd: UInt64, buffer: UInt64, size: UInt32) -> UInt32 {
+        return 100;
+    }
+    
+    proc Phi::close(fd: UInt64) -> UInt32 {
+        return 100;
+    }
+}
