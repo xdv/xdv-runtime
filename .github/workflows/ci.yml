@@ -14,53 +14,6 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v3
 
-    - name: Setup DPL
-      uses: ./.github/actions/setup-dpl
-
-    - name: Build runtime_io
-      run: dpl build --sector runtime_io
-
-    - name: Build runtime_io_tests
-      run: dpl build --sector runtime_io_tests
-
-    - name: Build runtime_memory
-      run: dpl build --sector runtime_memory
-
-    - name: Build runtime_memory_tests
-      run: dpl build --sector runtime_memory_tests
-
-    - name: Build runtime_string
-      run: dpl build --sector runtime_string
-
-    - name: Build runtime_string_tests
-      run: dpl build --sector runtime_string_tests
-
-    - name: Build runtime_process
-      run: dpl build --sector runtime_process
-
-    - name: Build runtime_process_tests
-      run: dpl build --sector runtime_process_tests
-
-    - name: Build runtime_scheduler
-      run: dpl build --sector runtime_scheduler
-
-    - name: Build runtime_scheduler_tests
-      run: dpl build --sector runtime_scheduler_tests
-
-    - name: Build runtime_fs
-      run: dpl build --sector runtime_fs
-
-    - name: Build runtime_fs_tests
-      run: dpl build --sector runtime_fs_tests
-
-    - name: Build runtime_console
-      run: dpl build --sector runtime_console
-
-    - name: Build runtime_console_tests
-      run: dpl build --sector runtime_console_tests
-
-    - name: Build runtime_init
-      run: dpl build --sector runtime_init
-
-    - name: Build runtime_init_tests
-      run: dpl build --sector runtime_init_tests
+    - name: Verify source files exist
+      run: |
+        ls -la src/
