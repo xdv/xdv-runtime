@@ -12,48 +12,82 @@ forge RuntimeIoErrors {
 }
 
 forge RuntimeIo {
-    
+
     const MAX_OPEN_FILES: UInt32 = 64;
-    
+    const MODE_READ: UInt32 = 0;
+    const MODE_WRITE: UInt32 = 1;
+    const MODE_APPEND: UInt32 = 2;
+
+    const NULL_HANDLE: UInt64 = 0;
+
+    const IO_OK: UInt32 = 0;
+
     proc K::open(path: UInt64, mode: UInt32) -> UInt64 {
         if path == 0 {
-            return 0;
+            return NULL_HANDLE;
         } else {
-            return file_open(path, mode);
+            if mode > MODE_APPEND {
+                return NULL_HANDLE;
+            } else {
+                return file_open(path, mode);
+            }
         }
     }
-    
+
     proc K::read(fd: UInt64, buffer: UInt64, size: UInt32) -> UInt32 {
-        if fd == 0 {
+        if fd == NULL_HANDLE {
             return ERR_INVALID_HANDLE;
         } else {
-            return file_read(fd, buffer, size);
+            if buffer == 0 {
+                return ERR_READ_FAILED;
+            } else {
+                if size == 0 {
+                    return ERR_OK;
+                } else {
+                    let read_status = file_read(fd, buffer, size);
+                    if read_status == IO_OK {
+                        return ERR_OK;
+                    } else {
+                        return ERR_READ_FAILED;
+                    }
+                }
+            }
         }
     }
-    
+
     proc K::write(fd: UInt64, buffer: UInt64, size: UInt32) -> UInt32 {
-        if fd == 0 {
+        if fd == NULL_HANDLE {
             return ERR_INVALID_HANDLE;
         } else {
-            return file_write(fd, buffer, size);
+            if buffer == 0 {
+                return ERR_WRITE_FAILED;
+            } else {
+                if size == 0 {
+                    return ERR_OK;
+                } else {
+                    let write_status = file_write(fd, buffer, size);
+                    if write_status == IO_OK {
+                        return ERR_OK;
+                    } else {
+                        return ERR_WRITE_FAILED;
+                    }
+                }
+            }
         }
     }
-    
+
     proc K::close(fd: UInt64) -> UInt32 {
-        if fd == 0 {
+        if fd == NULL_HANDLE {
             return ERR_INVALID_HANDLE;
         } else {
-            return file_close(fd);
+            let close_status = file_close(fd);
+            if close_status == IO_OK {
+                return ERR_OK;
+            } else {
+                return ERR_CLOSE_FAILED;
+            }
         }
     }
-    
-    
-    
-    
-    
-    
-    
-    
 }
 
 

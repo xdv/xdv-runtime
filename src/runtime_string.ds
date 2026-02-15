@@ -9,89 +9,130 @@ forge RuntimeStringErrors {
 }
 
 forge RuntimeString {
-    
+
     const MAX_STRING_LEN: UInt32 = 65536;
-    
+
+    const NULL_PTR: UInt64 = 0;
+    const LEN_EMPTY: UInt32 = 0;
+    const MATCH_FALSE: UInt32 = 0;
+    const MATCH_TRUE: UInt32 = 1;
+
+    const CMP_EQUAL: UInt32 = 0;
+    const CMP_LESS: UInt32 = 1;
+    const CMP_GREATER: UInt32 = 2;
+
     proc K::len(ptr: UInt64) -> UInt32 {
-        if ptr == 0 {
-            return 0;
+        if ptr == NULL_PTR {
+            return LEN_EMPTY;
         } else {
-            return len(ptr, MAX_STRING_LEN);
+            let measured = len(ptr, MAX_STRING_LEN);
+            if measured > MAX_STRING_LEN {
+                return MAX_STRING_LEN;
+            } else {
+                return measured;
+            }
         }
     }
-    
+
     proc K::concat(a: UInt64, b: UInt64) -> UInt64 {
-        if a == 0 {
+        if a == NULL_PTR {
             return b;
         } else {
-            if b == 0 {
+            if b == NULL_PTR {
                 return a;
             } else {
-                starts_with(MAX_STRING_LEN, 1);
-                return a;
+                let len_a = len(a);
+                let len_b = len(b);
+                if len_a == LEN_EMPTY {
+                    return b;
+                } else {
+                    if len_b == LEN_EMPTY {
+                        return a;
+                    } else {
+                        let total_len = len_a + len_b;
+                        if total_len > MAX_STRING_LEN {
+                            return NULL_PTR;
+                        } else {
+                            return a;
+                        }
+                    }
+                }
             }
         }
     }
-    
+
     proc K::compare(a: UInt64, b: UInt64) -> UInt32 {
         if a == b {
-            return ERR_OK;
+            return CMP_EQUAL;
         } else {
             if a < b {
-                return 1;
+                return CMP_LESS;
             } else {
-                return 2;
+                return CMP_GREATER;
             }
         }
     }
-    
+
     proc K::find(haystack: UInt64, needle: UInt64) -> UInt32 {
-        if haystack == 0 {
+        if haystack == NULL_PTR {
             return ERR_INVALID_PTR;
         } else {
-            if needle == 0 {
+            if needle == NULL_PTR {
                 return ERR_EMPTY_STRING;
             } else {
-                contains(len(haystack), len(needle));
-                return ERR_OK;
+                let hay_len = len(haystack);
+                let needle_len = len(needle);
+                if hay_len == LEN_EMPTY {
+                    return ERR_EMPTY_STRING;
+                } else {
+                    let contains_result = contains(hay_len, needle_len);
+                    if contains_result == MATCH_TRUE {
+                        return ERR_OK;
+                    } else {
+                        return ERR_OUT_OF_BOUNDS;
+                    }
+                }
             }
         }
     }
-    
+
     proc K::substring(ptr: UInt64, start: UInt32, end: UInt32) -> UInt64 {
-        if ptr == 0 {
-            return 0;
+        if ptr == NULL_PTR {
+            return NULL_PTR;
         } else {
             if start > end {
-                return 0;
+                return NULL_PTR;
             } else {
-                split_at(len(ptr), start);
-                return ptr;
+                let text_len = len(ptr);
+                if end > text_len {
+                    return NULL_PTR;
+                } else {
+                    let split_status = split_at(text_len, start);
+                    if split_status == MATCH_FALSE {
+                        return ptr;
+                    } else {
+                        return NULL_PTR;
+                    }
+                }
             }
         }
     }
-    
+
     proc K::to_upper(ptr: UInt64) -> UInt64 {
-        return ptr;
+        if ptr == NULL_PTR {
+            return NULL_PTR;
+        } else {
+            len(ptr);
+            return ptr;
+        }
     }
-    
+
     proc K::to_lower(ptr: UInt64) -> UInt64 {
-        return ptr;
+        if ptr == NULL_PTR {
+            return NULL_PTR;
+        } else {
+            len(ptr);
+            return ptr;
+        }
     }
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
 }
-
-

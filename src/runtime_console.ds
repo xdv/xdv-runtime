@@ -8,12 +8,12 @@ forge RuntimeConsoleErrors {
 }
 
 forge RuntimeConsole {
-    
+
     const VGA_ADDR: UInt64 = 18432;
     const VGA_WIDTH: UInt32 = 80;
     const VGA_HEIGHT: UInt32 = 25;
     const VGA_SIZE: UInt32 = 4000;
-    
+
     const COLOR_BLACK: UInt8 = 0;
     const COLOR_BLUE: UInt8 = 1;
     const COLOR_GREEN: UInt8 = 2;
@@ -30,29 +30,51 @@ forge RuntimeConsole {
     const COLOR_LIGHT_MAGENTA: UInt8 = 13;
     const COLOR_YELLOW: UInt8 = 14;
     const COLOR_WHITE: UInt8 = 15;
-    
+
+    const SERIAL_TX_PORT: UInt16 = 1016;
+    const KEYBOARD_RX_PORT: UInt16 = 960;
+    const CURSOR_ROW_PORT: UInt16 = 980;
+    const CURSOR_COL_PORT: UInt16 = 981;
+    const CURSOR_CMD_PORT: UInt16 = 982;
+    const COLOR_PORT: UInt16 = 983;
+    const SCROLL_PORT: UInt16 = 984;
+
+    const IO_OK: UInt32 = 0;
+    const CURSOR_COMMIT: UInt8 = 1;
+    const SCROLL_LINE: UInt8 = 1;
+    const CURSOR_LAST_ROW: UInt32 = 24;
+    const CURSOR_LAST_COL: UInt32 = 79;
+
     proc K::putchar(ch: UInt8) -> UInt32 {
-        io_write(1016, ch);
-        return ERR_OK;
+        let write_status = io_write(SERIAL_TX_PORT, ch);
+        if write_status == IO_OK {
+            return ERR_OK;
+        } else {
+            return ERR_OUT_OF_RANGE;
+        }
     }
-    
+
     proc K::puts(ptr: UInt64) -> UInt32 {
         if ptr == 0 {
             return ERR_OUT_OF_RANGE;
         } else {
-            display_line(ptr);
-            return ERR_OK;
+            let line_status = display_line(ptr);
+            if line_status == IO_OK {
+                return ERR_OK;
+            } else {
+                return ERR_OUT_OF_RANGE;
+            }
         }
     }
-    
+
     proc K::getchar() -> UInt32 {
-        return io_read(960);
+        return io_read(KEYBOARD_RX_PORT);
     }
-    
+
     proc K::clear() -> UInt32 {
         return console_init();
     }
-    
+
     proc K::set_cursor(row: UInt32, col: UInt32) -> UInt32 {
         if row >= VGA_HEIGHT {
             return ERR_INVALID_COORD;
@@ -60,25 +82,37 @@ forge RuntimeConsole {
             if col >= VGA_WIDTH {
                 return ERR_INVALID_COORD;
             } else {
+                io_write(CURSOR_CMD_PORT, CURSOR_COMMIT);
                 emit "runtime-console cursor move";
                 return ERR_OK;
             }
         }
     }
-    
+
     proc K::get_cursor_row() -> UInt32 {
-        return 0;
+        let row = io_read(CURSOR_ROW_PORT);
+        if row >= VGA_HEIGHT {
+            return CURSOR_LAST_ROW;
+        } else {
+            return row;
+        }
     }
-    
+
     proc K::get_cursor_col() -> UInt32 {
-        return 0;
+        let col = io_read(CURSOR_COL_PORT);
+        if col >= VGA_WIDTH {
+            return CURSOR_LAST_COL;
+        } else {
+            return col;
+        }
     }
-    
+
     proc K::scroll() -> UInt32 {
+        io_write(SCROLL_PORT, SCROLL_LINE);
         emit "runtime-console scroll";
         return ERR_OK;
     }
-    
+
     proc K::set_color(fg: UInt8, bg: UInt8) -> UInt32 {
         if fg > COLOR_WHITE {
             return ERR_OUT_OF_RANGE;
@@ -86,29 +120,11 @@ forge RuntimeConsole {
             if bg > COLOR_WHITE {
                 return ERR_OUT_OF_RANGE;
             } else {
+                let packed = fg + bg;
+                io_write(COLOR_PORT, packed);
                 emit "runtime-console color update";
                 return ERR_OK;
             }
         }
     }
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
 }
-
-

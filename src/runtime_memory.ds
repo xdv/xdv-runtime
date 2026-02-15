@@ -10,70 +10,85 @@ forge RuntimeMemoryErrors {
 }
 
 forge RuntimeMemory {
-    
+
     const PAGE_SIZE: UInt32 = 4096;
     const MAX_HEAP_SIZE: UInt64 = 16777216;
-    
+
+    const NULL_PTR: UInt64 = 0;
+    const MEM_OK: UInt32 = 0;
+    const BYTES_NONE: UInt32 = 0;
+
     proc K::alloc(size: UInt32) -> UInt64 {
         if size == 0 {
-            return 0;
+            return NULL_PTR;
         } else {
             let aligned = align_up(size, PAGE_SIZE);
             if aligned > MAX_HEAP_SIZE {
-                return 0;
+                return NULL_PTR;
             } else {
                 memory_init();
-                return mem_alloc(aligned);
+                let ptr = mem_alloc(aligned);
+                if ptr == NULL_PTR {
+                    return NULL_PTR;
+                } else {
+                    return ptr;
+                }
             }
         }
     }
-    
+
     proc K::free(ptr: UInt64) -> UInt32 {
-        if ptr == 0 {
+        if ptr == NULL_PTR {
             return ERR_INVALID_POINTER;
         } else {
-            return mem_free(ptr);
+            let free_status = mem_free(ptr);
+            if free_status == MEM_OK {
+                return ERR_OK;
+            } else {
+                return ERR_FREE_FAILED;
+            }
         }
     }
-    
+
     proc K::zero_alloc(size: UInt32) -> UInt64 {
         if size == 0 {
-            return 0;
+            return NULL_PTR;
         } else {
-            memory_init();
-            return mem_zero_alloc(size);
+            let aligned = align_up(size, PAGE_SIZE);
+            if aligned > MAX_HEAP_SIZE {
+                return NULL_PTR;
+            } else {
+                memory_init();
+                return mem_zero_alloc(aligned);
+            }
         }
     }
-    
+
     proc K::copy(dest: UInt64, src: UInt64, size: UInt32) -> UInt32 {
-        if dest == 0 {
+        if dest == NULL_PTR {
             return ERR_INVALID_POINTER;
         } else {
-            if src == 0 {
+            if src == NULL_PTR {
                 return ERR_INVALID_POINTER;
+            } else {
+                if size == BYTES_NONE {
+                    return ERR_OK;
+                } else {
+                    return size;
+                }
+            }
+        }
+    }
+
+    proc K::set(ptr: UInt64, value: UInt8, size: UInt32) -> UInt32 {
+        if ptr == NULL_PTR {
+            return ERR_INVALID_POINTER;
+        } else {
+            if size == BYTES_NONE {
+                return ERR_OK;
             } else {
                 return size;
             }
         }
     }
-    
-    proc K::set(ptr: UInt64, value: UInt8, size: UInt32) -> UInt32 {
-        if ptr == 0 {
-            return ERR_INVALID_POINTER;
-        } else {
-            return size;
-        }
-    }
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
 }
-
-

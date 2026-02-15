@@ -18,19 +18,30 @@ forge RuntimeFsErrors {
 }
 
 forge RuntimeFs {
-    
+
     const MAX_OPEN_FILES: UInt32 = 64;
     const MAX_PATH_LEN: UInt32 = 256;
-    
+
+    const FILE_FLAG_READ: UInt32 = 0;
+    const FILE_FLAG_WRITE: UInt32 = 1;
+    const FILE_FLAG_APPEND: UInt32 = 2;
+
+    const NULL_HANDLE: UInt64 = 0;
+    const IO_OK: UInt32 = 0;
+
     proc K::mount(device: UInt64, mount_point: UInt64) -> UInt32 {
         if device == 0 {
             return ERR_MOUNT_FAILED;
         } else {
-            emit "runtime-fs mount";
-            return ERR_OK;
+            if mount_point == 0 {
+                return ERR_MOUNT_FAILED;
+            } else {
+                emit "runtime-fs mount";
+                return ERR_OK;
+            }
         }
     }
-    
+
     proc K::umount(mount_point: UInt64) -> UInt32 {
         if mount_point == 0 {
             return ERR_UMOUNT_FAILED;
@@ -39,39 +50,74 @@ forge RuntimeFs {
             return ERR_OK;
         }
     }
-    
+
     proc K::open(path: UInt64, flags: UInt32) -> UInt64 {
         if path == 0 {
-            return 0;
+            return NULL_HANDLE;
         } else {
-            return file_open(path, flags);
+            if flags > FILE_FLAG_APPEND {
+                return NULL_HANDLE;
+            } else {
+                return file_open(path, flags);
+            }
         }
     }
-    
+
     proc K::read(fd: UInt64, buffer: UInt64, size: UInt32) -> UInt32 {
-        if fd == 0 {
+        if fd == NULL_HANDLE {
             return ERR_READ_FAILED;
         } else {
-            return file_read(fd, buffer, size);
+            if buffer == 0 {
+                return ERR_READ_FAILED;
+            } else {
+                if size == 0 {
+                    return ERR_OK;
+                } else {
+                    let read_status = file_read(fd, buffer, size);
+                    if read_status == IO_OK {
+                        return ERR_OK;
+                    } else {
+                        return ERR_READ_FAILED;
+                    }
+                }
+            }
         }
     }
-    
+
     proc K::write(fd: UInt64, buffer: UInt64, size: UInt32) -> UInt32 {
-        if fd == 0 {
+        if fd == NULL_HANDLE {
             return ERR_WRITE_FAILED;
         } else {
-            return file_write(fd, buffer, size);
+            if buffer == 0 {
+                return ERR_WRITE_FAILED;
+            } else {
+                if size == 0 {
+                    return ERR_OK;
+                } else {
+                    let write_status = file_write(fd, buffer, size);
+                    if write_status == IO_OK {
+                        return ERR_OK;
+                    } else {
+                        return ERR_WRITE_FAILED;
+                    }
+                }
+            }
         }
     }
-    
+
     proc K::close(fd: UInt64) -> UInt32 {
-        if fd == 0 {
+        if fd == NULL_HANDLE {
             return ERR_CLOSE_FAILED;
         } else {
-            return file_close(fd);
+            let close_status = file_close(fd);
+            if close_status == IO_OK {
+                return ERR_OK;
+            } else {
+                return ERR_CLOSE_FAILED;
+            }
         }
     }
-    
+
     proc K::stat(path: UInt64, stat_buf: UInt64) -> UInt32 {
         if path == 0 {
             return ERR_NOT_FOUND;
@@ -83,15 +129,19 @@ forge RuntimeFs {
             }
         }
     }
-    
+
     proc K::mkdir(path: UInt64, mode: UInt32) -> UInt32 {
         if path == 0 {
             return ERR_NOT_FOUND;
         } else {
-            return mode;
+            if mode == 0 {
+                return ERR_PERMISSION;
+            } else {
+                return ERR_OK;
+            }
         }
     }
-    
+
     proc K::rmdir(path: UInt64) -> UInt32 {
         if path == 0 {
             return ERR_NOT_DIRECTORY;
@@ -99,7 +149,7 @@ forge RuntimeFs {
             return ERR_OK;
         }
     }
-    
+
     proc K::unlink(path: UInt64) -> UInt32 {
         if path == 0 {
             return ERR_NOT_FOUND;
@@ -107,7 +157,7 @@ forge RuntimeFs {
             return ERR_OK;
         }
     }
-    
+
     proc K::readdir(dir: UInt64, entry: UInt64) -> UInt32 {
         if dir == 0 {
             return ERR_NOT_DIRECTORY;
@@ -119,28 +169,12 @@ forge RuntimeFs {
             }
         }
     }
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
+
+    proc K::is_supported_flag(flag: UInt32) -> UInt32 {
+        if flag > FILE_FLAG_APPEND {
+            return ERR_OPEN_FAILED;
+        } else {
+            return ERR_OK;
+        }
+    }
 }
-
-

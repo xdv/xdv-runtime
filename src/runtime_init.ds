@@ -6,88 +6,115 @@ forge RuntimeInitErrors {
     const ERR_FORK_FAILED: UInt32 = 2;
     const ERR_EXEC_FAILED: UInt32 = 3;
     const ERR_WAIT_FAILED: UInt32 = 4;
+    const ERR_SIGNAL_UNSUPPORTED: UInt32 = 5;
     const ERR_DOMAIN_NOT_AVAILABLE: UInt32 = 100;
 }
 
 forge RuntimeInit {
-    
+
     const INIT_PID: UInt32 = 1;
     const INIT_STACK_SIZE: UInt32 = 8192;
-    
+
+    const ROOT_DEVICE: UInt64 = 1;
+    const ROOT_MOUNT_POINT: UInt64 = 1;
+
+    const NULL_PID: UInt32 = 0;
+
+    const SIG_NOP: UInt32 = 0;
+    const SIG_REAP: UInt32 = 1;
+    const SIG_TERM: UInt32 = 15;
+
     proc K::main() -> UInt32 {
         let base_init = runtime_init();
         if base_init == ERR_OK {
-            init_console();
-            init_scheduler();
-            init_fs();
-            return spawn_shell();
+            let console_status = init_console();
+            if console_status == ERR_OK {
+                let scheduler_status = init_scheduler();
+                if scheduler_status == ERR_OK {
+                    let fs_status = init_fs();
+                    if fs_status == ERR_OK {
+                        return spawn_shell();
+                    } else {
+                        return ERR_INIT_FAILED;
+                    }
+                } else {
+                    return ERR_INIT_FAILED;
+                }
+            } else {
+                return ERR_INIT_FAILED;
+            }
         } else {
             return ERR_INIT_FAILED;
         }
     }
-    
+
     proc K::init_fs() -> UInt32 {
-        let mount_result = mount(0, 0);
+        let mount_result = mount(ROOT_DEVICE, ROOT_MOUNT_POINT);
         if mount_result == ERR_OK {
             return ERR_OK;
         } else {
             return ERR_INIT_FAILED;
         }
     }
-    
+
     proc K::init_scheduler() -> UInt32 {
-        return process_init();
+        let process_status = process_init();
+        if process_status == ERR_OK {
+            return ERR_OK;
+        } else {
+            return ERR_INIT_FAILED;
+        }
     }
-    
+
     proc K::init_console() -> UInt32 {
-        return console_init();
+        let console_status = console_init();
+        if console_status == ERR_OK {
+            return ERR_OK;
+        } else {
+            return ERR_INIT_FAILED;
+        }
     }
-    
+
     proc K::spawn_shell() -> UInt32 {
-        let pid = spawn(1, INIT_STACK_SIZE);
-        if pid == 0 {
+        let pid = spawn(INIT_PID, INIT_STACK_SIZE);
+        if pid == NULL_PID {
             return ERR_FORK_FAILED;
         } else {
             return wait_for_child(pid);
         }
     }
-    
+
     proc K::wait_for_child(pid: UInt32) -> UInt32 {
-        if pid == 0 {
+        if pid == NULL_PID {
             return ERR_WAIT_FAILED;
         } else {
-            join(pid);
-            return ERR_OK;
+            let join_result = join(pid);
+            if join_result == NULL_PID {
+                return ERR_WAIT_FAILED;
+            } else {
+                return ERR_OK;
+            }
         }
     }
-    
+
     proc K::reap_zombies() -> UInt32 {
         return ERR_OK;
     }
-    
+
     proc K::handle_signal(sig: UInt32) -> UInt32 {
-        if sig == 0 {
+        if sig == SIG_NOP {
             return ERR_OK;
         } else {
-            return ERR_OK;
+            if sig == SIG_REAP {
+                reap_zombies();
+                return ERR_OK;
+            } else {
+                if sig == SIG_TERM {
+                    return ERR_OK;
+                } else {
+                    return ERR_SIGNAL_UNSUPPORTED;
+                }
+            }
         }
     }
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
 }
-
-

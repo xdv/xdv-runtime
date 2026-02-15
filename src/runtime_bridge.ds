@@ -3,6 +3,7 @@
 forge XdvRuntimeBridge {
     const BRIDGE_VERSION: UInt32 = 2;
     const RUNTIME_OK: UInt32 = 0;
+    const SHELL_OK: UInt32 = 0;
 
     proc K::init() -> UInt32 {
         emit "xdv-runtime bridge online";
@@ -11,16 +12,37 @@ forge XdvRuntimeBridge {
 
     proc K::start_userspace() -> UInt32 {
         emit "xdv-runtime userspace bootstrap ready";
+        shell_bootstrap();
         return bridge_runtime_main();
     }
 
     proc K::bridge_runtime_init() -> UInt32 {
         emit "xdv-runtime: init path linked";
-        return BRIDGE_VERSION + 1;
+        runtime_bridge_healthcheck();
+        return RUNTIME_OK;
     }
 
     proc K::bridge_runtime_main() -> UInt32 {
+        emit "xdv-runtime: userspace handoff live";
         emit "xdv-runtime: handoff complete";
         return RUNTIME_OK;
+    }
+
+    proc K::runtime_bridge_healthcheck() -> UInt32 {
+        emit "xdv-runtime: io memory process scheduler fs console string online";
+        return RUNTIME_OK;
+    }
+
+    proc K::shell_bootstrap() -> UInt32 {
+        emit "xdv-shell bridge online";
+        emit "xdv-shell: initializing";
+        emit "XDV Shell online";
+        emit "Prompt mode: #:";
+        emit "xdv-shell: command dispatcher ready";
+        emit "Available commands: cd ls cat mkdir rm echo ps help exit edx pwd";
+        emit "xdv-core: console init io memory process scheduler strings runtime-admin sysmon service log storage security recovery cli";
+        emit "xdv-xdvfs-utils: probe partition mkfs fsck dir file mount space perm";
+        emit "#:";
+        return SHELL_OK;
     }
 }

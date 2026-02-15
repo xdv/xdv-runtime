@@ -9,69 +9,95 @@ forge RuntimeSchedulerErrors {
 }
 
 forge RuntimeScheduler {
-    
+
     const MAX_PRIORITY: UInt32 = 10;
     const MIN_PRIORITY: UInt32 = 0;
     const DEFAULT_PRIORITY: UInt32 = 5;
     const TIME_SLICE_MS: UInt32 = 10;
-    
+
+    const NULL_PID: UInt32 = 0;
+    const THREAD_OK: UInt32 = 0;
+
     proc K::init() -> UInt32 {
-        process_init();
-        return ERR_OK;
+        let init_status = process_init();
+        if init_status == ERR_OK {
+            return ERR_OK;
+        } else {
+            return ERR_SCHEDULER_NOT_RUNNING;
+        }
     }
-    
+
     proc K::start() -> UInt32 {
-        process_init();
-        return ERR_OK;
+        return init();
     }
-    
+
     proc K::stop() -> UInt32 {
         return ERR_OK;
     }
-    
+
     proc K::add_task(pid: UInt32, priority: UInt32) -> UInt32 {
-        if priority > MAX_PRIORITY {
-            return ERR_INVALID_PRIORITY;
+        if pid == NULL_PID {
+            return ERR_NO_TASKS;
         } else {
-            return next_thread_id(pid, priority);
+            if priority > MAX_PRIORITY {
+                return ERR_INVALID_PRIORITY;
+            } else {
+                let normalized = clamp_u32(priority, MIN_PRIORITY, MAX_PRIORITY);
+                let task_id = next_thread_id(pid, normalized);
+                if task_id == NULL_PID {
+                    return ERR_NO_TASKS;
+                } else {
+                    return task_id;
+                }
+            }
         }
     }
-    
+
     proc K::remove_task(pid: UInt32) -> UInt32 {
-        return thread_join(pid);
-    }
-    
-    proc K::set_priority(pid: UInt32, priority: UInt32) -> UInt32 {
-        if priority > MAX_PRIORITY {
-            return ERR_INVALID_PRIORITY;
+        if pid == NULL_PID {
+            return ERR_NO_TASKS;
         } else {
-            return clamp_u32(priority, MIN_PRIORITY, MAX_PRIORITY);
+            let join_status = thread_join(pid);
+            if join_status == THREAD_OK {
+                return ERR_OK;
+            } else {
+                return ERR_NO_TASKS;
+            }
         }
     }
-    
+
+    proc K::set_priority(pid: UInt32, priority: UInt32) -> UInt32 {
+        if pid == NULL_PID {
+            return ERR_NO_TASKS;
+        } else {
+            if priority > MAX_PRIORITY {
+                return ERR_INVALID_PRIORITY;
+            } else {
+                return clamp_u32(priority, MIN_PRIORITY, MAX_PRIORITY);
+            }
+        }
+    }
+
     proc K::get_current_task() -> UInt32 {
-        return getpid();
+        let pid = getpid();
+        if pid == NULL_PID {
+            return ERR_SCHEDULER_NOT_RUNNING;
+        } else {
+            return pid;
+        }
     }
-    
+
     proc K::schedule() -> UInt32 {
-        return yield();
+        let current = get_current_task();
+        if current == ERR_SCHEDULER_NOT_RUNNING {
+            return ERR_SCHEDULER_NOT_RUNNING;
+        } else {
+            thread_sleep(TIME_SLICE_MS);
+            return current;
+        }
     }
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
+
+    proc K::default_priority() -> UInt32 {
+        return DEFAULT_PRIORITY;
+    }
 }
-
-
