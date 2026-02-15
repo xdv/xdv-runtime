@@ -16,74 +16,54 @@ forge RuntimeProcess {
     const INIT_PID: UInt32 = 1;
     
     proc K::spawn(entry: UInt64, stack_size: UInt32) -> UInt32 {
-        return 0;
+        if entry == 0 {
+            return 0;
+        } else {
+            process_init();
+            return thread_spawn(INIT_PID, stack_size);
+        }
     }
     
     proc K::join(pid: UInt32) -> UInt64 {
-        return 0;
+        let join_status = thread_join(pid);
+        if join_status == ERR_OK {
+            return pid;
+        } else {
+            return 0;
+        }
     }
     
     proc K::exit(pid: UInt32, code: UInt32) -> UInt32 {
-        return 0;
+        if pid == 0 {
+            return ERR_INVALID_PID;
+        } else {
+            return code;
+        }
     }
     
     proc K::getpid() -> UInt32 {
-        return 1;
+        return INIT_PID;
     }
     
     proc K::sleep(ms: UInt32) -> UInt32 {
-        return 0;
+        return thread_sleep(ms);
     }
     
     proc K::yield() -> UInt32 {
-        return 0;
+        return thread_sleep(0);
     }
     
-    proc Q::spawn(entry: UInt64, stack_size: UInt32) -> UInt32 {
-        return 100;
-    }
     
-    proc Q::join(pid: UInt32) -> UInt64 {
-        return 0;
-    }
     
-    proc Q::exit(pid: UInt32, code: UInt32) -> UInt32 {
-        return 100;
-    }
     
-    proc Q::getpid() -> UInt32 {
-        return 1;
-    }
     
-    proc Q::sleep(ms: UInt32) -> UInt32 {
-        return 100;
-    }
     
-    proc Q::yield() -> UInt32 {
-        return 100;
-    }
     
-    proc Phi::spawn(entry: UInt64, stack_size: UInt32) -> UInt32 {
-        return 100;
-    }
     
-    proc Phi::join(pid: UInt32) -> UInt64 {
-        return 0;
-    }
     
-    proc Phi::exit(pid: UInt32, code: UInt32) -> UInt32 {
-        return 100;
-    }
     
-    proc Phi::getpid() -> UInt32 {
-        return 1;
-    }
     
-    proc Phi::sleep(ms: UInt32) -> UInt32 {
-        return 100;
-    }
     
-    proc Phi::yield() -> UInt32 {
-        return 100;
-    }
 }
+
+

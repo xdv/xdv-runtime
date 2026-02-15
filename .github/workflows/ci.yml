@@ -11,9 +11,31 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v3
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
-    - name: Verify source files exist
-      run: |
-        ls -la src/
+      - name: Install Rust (stable)
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Clone dust compiler
+        run: |
+          git clone --depth 1 https://github.com/dustlang/dust.git ../dust
+
+      - name: Cache cargo build
+        uses: Swatinem/rust-cache@v2
+        with:
+          working-directory: ../dust
+
+      - name: Build Dust compiler
+        run: |
+          cd ../dust
+          cargo build --workspace
+
+      - name: Check all runtime sectors
+        run: |
+          export PATH="$PWD/../dust/target/debug:$PATH"
+          for sector in runtime_io runtime_memory runtime_string runtime_process runtime_scheduler runtime_fs runtime_console runtime_init; do
+            echo "Checking src/${sector}.ds..."
+            dust check "src/${sector}.ds" || { echo "FAILED: $sector"; exit 1; }
+          done
+          echo "All 8 sectors check OK"

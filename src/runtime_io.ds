@@ -16,50 +16,44 @@ forge RuntimeIo {
     const MAX_OPEN_FILES: UInt32 = 64;
     
     proc K::open(path: UInt64, mode: UInt32) -> UInt64 {
-        return 0;
+        if path == 0 {
+            return 0;
+        } else {
+            return file_open(path, mode);
+        }
     }
     
     proc K::read(fd: UInt64, buffer: UInt64, size: UInt32) -> UInt32 {
-        return 0;
+        if fd == 0 {
+            return ERR_INVALID_HANDLE;
+        } else {
+            return file_read(fd, buffer, size);
+        }
     }
     
     proc K::write(fd: UInt64, buffer: UInt64, size: UInt32) -> UInt32 {
-        return 0;
+        if fd == 0 {
+            return ERR_INVALID_HANDLE;
+        } else {
+            return file_write(fd, buffer, size);
+        }
     }
     
     proc K::close(fd: UInt64) -> UInt32 {
-        return 0;
+        if fd == 0 {
+            return ERR_INVALID_HANDLE;
+        } else {
+            return file_close(fd);
+        }
     }
     
-    proc Q::open(path: UInt64, mode: UInt32) -> UInt64 {
-        return 0;
-    }
     
-    proc Q::read(fd: UInt64, buffer: UInt64, size: UInt32) -> UInt32 {
-        return 100;
-    }
     
-    proc Q::write(fd: UInt64, buffer: UInt64, size: UInt32) -> UInt32 {
-        return 100;
-    }
     
-    proc Q::close(fd: UInt64) -> UInt32 {
-        return 100;
-    }
     
-    proc Phi::open(path: UInt64, mode: UInt32) -> UInt64 {
-        return 0;
-    }
     
-    proc Phi::read(fd: UInt64, buffer: UInt64, size: UInt32) -> UInt32 {
-        return 100;
-    }
     
-    proc Phi::write(fd: UInt64, buffer: UInt64, size: UInt32) -> UInt32 {
-        return 100;
-    }
     
-    proc Phi::close(fd: UInt64) -> UInt32 {
-        return 100;
-    }
 }
+
+

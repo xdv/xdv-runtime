@@ -13,86 +13,85 @@ forge RuntimeString {
     const MAX_STRING_LEN: UInt32 = 65536;
     
     proc K::len(ptr: UInt64) -> UInt32 {
-        return 0;
+        if ptr == 0 {
+            return 0;
+        } else {
+            return len(ptr, MAX_STRING_LEN);
+        }
     }
     
     proc K::concat(a: UInt64, b: UInt64) -> UInt64 {
-        return 0;
+        if a == 0 {
+            return b;
+        } else {
+            if b == 0 {
+                return a;
+            } else {
+                starts_with(MAX_STRING_LEN, 1);
+                return a;
+            }
+        }
     }
     
     proc K::compare(a: UInt64, b: UInt64) -> UInt32 {
-        return 0;
+        if a == b {
+            return ERR_OK;
+        } else {
+            if a < b {
+                return 1;
+            } else {
+                return 2;
+            }
+        }
     }
     
     proc K::find(haystack: UInt64, needle: UInt64) -> UInt32 {
-        return 0;
+        if haystack == 0 {
+            return ERR_INVALID_PTR;
+        } else {
+            if needle == 0 {
+                return ERR_EMPTY_STRING;
+            } else {
+                contains(len(haystack), len(needle));
+                return ERR_OK;
+            }
+        }
     }
     
     proc K::substring(ptr: UInt64, start: UInt32, end: UInt32) -> UInt64 {
-        return 0;
+        if ptr == 0 {
+            return 0;
+        } else {
+            if start > end {
+                return 0;
+            } else {
+                split_at(len(ptr), start);
+                return ptr;
+            }
+        }
     }
     
     proc K::to_upper(ptr: UInt64) -> UInt64 {
-        return 0;
+        return ptr;
     }
     
     proc K::to_lower(ptr: UInt64) -> UInt64 {
-        return 0;
+        return ptr;
     }
     
-    proc Q::len(ptr: UInt64) -> UInt32 {
-        return 0;
-    }
     
-    proc Q::concat(a: UInt64, b: UInt64) -> UInt64 {
-        return 100;
-    }
     
-    proc Q::compare(a: UInt64, b: UInt64) -> UInt32 {
-        return 100;
-    }
     
-    proc Q::find(haystack: UInt64, needle: UInt64) -> UInt32 {
-        return 100;
-    }
     
-    proc Q::substring(ptr: UInt64, start: UInt32, end: UInt32) -> UInt64 {
-        return 0;
-    }
     
-    proc Q::to_upper(ptr: UInt64) -> UInt64 {
-        return 0;
-    }
     
-    proc Q::to_lower(ptr: UInt64) -> UInt64 {
-        return 0;
-    }
     
-    proc Phi::len(ptr: UInt64) -> UInt32 {
-        return 0;
-    }
     
-    proc Phi::concat(a: UInt64, b: UInt64) -> UInt64 {
-        return 100;
-    }
     
-    proc Phi::compare(a: UInt64, b: UInt64) -> UInt32 {
-        return 100;
-    }
     
-    proc Phi::find(haystack: UInt64, needle: UInt64) -> UInt32 {
-        return 100;
-    }
     
-    proc Phi::substring(ptr: UInt64, start: UInt32, end: UInt32) -> UInt64 {
-        return 0;
-    }
     
-    proc Phi::to_upper(ptr: UInt64) -> UInt64 {
-        return 0;
-    }
     
-    proc Phi::to_lower(ptr: UInt64) -> UInt64 {
-        return 0;
-    }
 }
+
+

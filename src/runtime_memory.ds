@@ -15,62 +15,65 @@ forge RuntimeMemory {
     const MAX_HEAP_SIZE: UInt64 = 16777216;
     
     proc K::alloc(size: UInt32) -> UInt64 {
-        return 0;
+        if size == 0 {
+            return 0;
+        } else {
+            let aligned = align_up(size, PAGE_SIZE);
+            if aligned > MAX_HEAP_SIZE {
+                return 0;
+            } else {
+                memory_init();
+                return mem_alloc(aligned);
+            }
+        }
     }
     
     proc K::free(ptr: UInt64) -> UInt32 {
-        return 0;
+        if ptr == 0 {
+            return ERR_INVALID_POINTER;
+        } else {
+            return mem_free(ptr);
+        }
     }
     
     proc K::zero_alloc(size: UInt32) -> UInt64 {
-        return 0;
+        if size == 0 {
+            return 0;
+        } else {
+            memory_init();
+            return mem_zero_alloc(size);
+        }
     }
     
     proc K::copy(dest: UInt64, src: UInt64, size: UInt32) -> UInt32 {
-        return 0;
+        if dest == 0 {
+            return ERR_INVALID_POINTER;
+        } else {
+            if src == 0 {
+                return ERR_INVALID_POINTER;
+            } else {
+                return size;
+            }
+        }
     }
     
     proc K::set(ptr: UInt64, value: UInt8, size: UInt32) -> UInt32 {
-        return 0;
+        if ptr == 0 {
+            return ERR_INVALID_POINTER;
+        } else {
+            return size;
+        }
     }
     
-    proc Q::alloc(size: UInt32) -> UInt64 {
-        return 0;
-    }
     
-    proc Q::free(ptr: UInt64) -> UInt32 {
-        return 100;
-    }
     
-    proc Q::zero_alloc(size: UInt32) -> UInt64 {
-        return 0;
-    }
     
-    proc Q::copy(dest: UInt64, src: UInt64, size: UInt32) -> UInt32 {
-        return 100;
-    }
     
-    proc Q::set(ptr: UInt64, value: UInt8, size: UInt32) -> UInt32 {
-        return 100;
-    }
     
-    proc Phi::alloc(size: UInt32) -> UInt64 {
-        return 0;
-    }
     
-    proc Phi::free(ptr: UInt64) -> UInt32 {
-        return 100;
-    }
     
-    proc Phi::zero_alloc(size: UInt32) -> UInt64 {
-        return 0;
-    }
     
-    proc Phi::copy(dest: UInt64, src: UInt64, size: UInt32) -> UInt32 {
-        return 100;
-    }
     
-    proc Phi::set(ptr: UInt64, value: UInt8, size: UInt32) -> UInt32 {
-        return 100;
-    }
 }
+
+

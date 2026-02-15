@@ -15,98 +15,79 @@ forge RuntimeInit {
     const INIT_STACK_SIZE: UInt32 = 8192;
     
     proc K::main() -> UInt32 {
-        return 0;
+        let base_init = runtime_init();
+        if base_init == ERR_OK {
+            init_console();
+            init_scheduler();
+            init_fs();
+            return spawn_shell();
+        } else {
+            return ERR_INIT_FAILED;
+        }
     }
     
     proc K::init_fs() -> UInt32 {
-        return 0;
+        let mount_result = mount(0, 0);
+        if mount_result == ERR_OK {
+            return ERR_OK;
+        } else {
+            return ERR_INIT_FAILED;
+        }
     }
     
     proc K::init_scheduler() -> UInt32 {
-        return 0;
+        return process_init();
     }
     
     proc K::init_console() -> UInt32 {
-        return 0;
+        return console_init();
     }
     
     proc K::spawn_shell() -> UInt32 {
-        return 0;
+        let pid = spawn(1, INIT_STACK_SIZE);
+        if pid == 0 {
+            return ERR_FORK_FAILED;
+        } else {
+            return wait_for_child(pid);
+        }
     }
     
     proc K::wait_for_child(pid: UInt32) -> UInt32 {
-        return 0;
+        if pid == 0 {
+            return ERR_WAIT_FAILED;
+        } else {
+            join(pid);
+            return ERR_OK;
+        }
     }
     
     proc K::reap_zombies() -> UInt32 {
-        return 0;
+        return ERR_OK;
     }
     
     proc K::handle_signal(sig: UInt32) -> UInt32 {
-        return 0;
+        if sig == 0 {
+            return ERR_OK;
+        } else {
+            return ERR_OK;
+        }
     }
     
-    proc Q::main() -> UInt32 {
-        return 100;
-    }
     
-    proc Q::init_fs() -> UInt32 {
-        return 100;
-    }
     
-    proc Q::init_scheduler() -> UInt32 {
-        return 100;
-    }
     
-    proc Q::init_console() -> UInt32 {
-        return 100;
-    }
     
-    proc Q::spawn_shell() -> UInt32 {
-        return 100;
-    }
     
-    proc Q::wait_for_child(pid: UInt32) -> UInt32 {
-        return 100;
-    }
     
-    proc Q::reap_zombies() -> UInt32 {
-        return 100;
-    }
     
-    proc Q::handle_signal(sig: UInt32) -> UInt32 {
-        return 100;
-    }
     
-    proc Phi::main() -> UInt32 {
-        return 100;
-    }
     
-    proc Phi::init_fs() -> UInt32 {
-        return 100;
-    }
     
-    proc Phi::init_scheduler() -> UInt32 {
-        return 100;
-    }
     
-    proc Phi::init_console() -> UInt32 {
-        return 100;
-    }
     
-    proc Phi::spawn_shell() -> UInt32 {
-        return 100;
-    }
     
-    proc Phi::wait_for_child(pid: UInt32) -> UInt32 {
-        return 100;
-    }
     
-    proc Phi::reap_zombies() -> UInt32 {
-        return 100;
-    }
     
-    proc Phi::handle_signal(sig: UInt32) -> UInt32 {
-        return 100;
-    }
 }
+
+
