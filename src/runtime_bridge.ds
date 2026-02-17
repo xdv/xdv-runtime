@@ -1,7 +1,7 @@
-// xdv-runtime bridge for xdv-os integration checks.
+// xdv-runtime bridge for xdv-os boot profile (codegen-safe subset).
 
 forge XdvRuntimeBridge {
-    const BRIDGE_VERSION: UInt32 = 2;
+    const BRIDGE_VERSION: UInt32 = 5;
     const RUNTIME_OK: UInt32 = 0;
     const SHELL_OK: UInt32 = 0;
 
@@ -12,6 +12,7 @@ forge XdvRuntimeBridge {
 
     proc K::start_userspace() -> UInt32 {
         emit "xdv-runtime userspace bootstrap ready";
+        emit "xdv-runtime: received xdv-kernel userspace handoff";
         shell_bootstrap();
         return bridge_runtime_main();
     }
@@ -34,15 +35,10 @@ forge XdvRuntimeBridge {
     }
 
     proc K::shell_bootstrap() -> UInt32 {
-        emit "xdv-shell bridge online";
-        emit "xdv-shell: initializing";
-        emit "XDV Shell online";
-        emit "Prompt mode: #:";
-        emit "xdv-shell: command dispatcher ready";
-        emit "Available commands: cd ls cat mkdir rm echo ps help exit edx pwd";
-        emit "xdv-core: console init io memory process scheduler strings runtime-admin sysmon service log storage security recovery cli";
-        emit "xdv-xdvfs-utils: probe partition mkfs fsck dir file mount space perm";
-        emit "#:";
+        emit "xdv-runtime: loading xdv-shell from xdvfs preload";
+        emit "xdv-runtime: preload packages xdv-os xdv-core xdv-edx xdv-shell";
+        shell_bridge_init();
+        shell_bridge_launch();
         return SHELL_OK;
     }
 }
