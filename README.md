@@ -52,8 +52,9 @@ src/
 ## Dependencies
 
 - `dustlib` (`../dustlib`)
-- `dustlib_k` (`../dustlib_k`)
+- `dustlib_k` (`../dustlib-k`)
 
 ## Version
 
 `0.2.0`
+
