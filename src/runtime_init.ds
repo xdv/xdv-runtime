@@ -1,4 +1,7 @@
-// Runtime Init - Init Process (PID 1)
+// File: runtime_init.ds - This file is part of XDV
+// Copyright (c) 2026 Dust LLC, and Contributors
+// Description:
+//   Runtime Init - Init Process (PID 1)
 
 forge RuntimeInitErrors {
     const ERR_OK: UInt32 = 0;

@@ -1,4 +1,7 @@
-// Runtime String - Wraps dustlib::str
+// File: runtime_string.ds - This file is part of XDV
+// Copyright (c) 2026 Dust LLC, and Contributors
+// Description:
+//   Runtime String - Wraps dustlib::str
 
 forge RuntimeStringErrors {
     const ERR_OK: UInt32 = 0;

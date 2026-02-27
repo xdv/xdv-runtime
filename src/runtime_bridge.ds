@@ -1,4 +1,7 @@
-// xdv-runtime bridge for xdv-os boot profile (codegen-safe subset).
+// File: runtime_bridge.ds - This file is part of XDV
+// Copyright (c) 2026 Dust LLC, and Contributors
+// Description:
+//   xdv-runtime bridge for xdv-os boot profile (codegen-safe subset).
 
 forge XdvRuntimeBridge {
     const BRIDGE_VERSION: UInt32 = 5;

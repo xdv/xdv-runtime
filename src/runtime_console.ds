@@ -1,4 +1,7 @@
-// Runtime Console - Console I/O
+// File: runtime_console.ds - This file is part of XDV
+// Copyright (c) 2026 Dust LLC, and Contributors
+// Description:
+//   Runtime Console - Console I/O
 
 forge RuntimeConsoleErrors {
     const ERR_OK: UInt32 = 0;

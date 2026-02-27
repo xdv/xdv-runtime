@@ -1,4 +1,7 @@
-// Runtime I/O - Wraps dustlib_k::io
+// File: runtime_io.ds - This file is part of XDV
+// Copyright (c) 2026 Dust LLC, and Contributors
+// Description:
+//   Runtime I/O - Wraps dustlib_k::io
 
 forge RuntimeIoErrors {
     const ERR_OK: UInt32 = 0;

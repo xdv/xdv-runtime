@@ -1,4 +1,7 @@
-// Runtime Memory - Wraps dustlib_k::memory
+// File: runtime_memory.ds - This file is part of XDV
+// Copyright (c) 2026 Dust LLC, and Contributors
+// Description:
+//   Runtime Memory - Wraps dustlib_k::memory
 
 forge RuntimeMemoryErrors {
     const ERR_OK: UInt32 = 0;

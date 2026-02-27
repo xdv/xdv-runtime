@@ -1,4 +1,7 @@
-// Runtime FS - File System Interface (wraps xdvfs)
+// File: runtime_fs.ds - This file is part of XDV
+// Copyright (c) 2026 Dust LLC, and Contributors
+// Description:
+//   Runtime FS - File System Interface (wraps xdvfs)
 
 forge RuntimeFsErrors {
     const ERR_OK: UInt32 = 0;

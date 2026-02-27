@@ -1,4 +1,7 @@
-// Runtime Process - Wraps dustlib_k::threading
+// File: runtime_process.ds - This file is part of XDV
+// Copyright (c) 2026 Dust LLC, and Contributors
+// Description:
+//   Runtime Process - Wraps dustlib_k::threading
 
 forge RuntimeProcessErrors {
     const ERR_OK: UInt32 = 0;
