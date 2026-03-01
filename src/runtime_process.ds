@@ -1,7 +1,8 @@
 // File: runtime_process.ds - This file is part of XDV
 // Copyright (c) 2026 Dust LLC, and Contributors
 // Description:
-//   Runtime Process - Wraps dustlib_k::threading
+//   Runtime Process - Hybrid Runtime ABI process/domain bindings,
+//   capability/contract-aware calls, replay hooks, and telemetry hooks.
 
 forge RuntimeProcessErrors {
     const ERR_OK: UInt32 = 0;
@@ -11,6 +12,26 @@ forge RuntimeProcessErrors {
     const ERR_PROCESS_NOT_FOUND: UInt32 = 4;
     const ERR_OUT_OF_PIDS: UInt32 = 5;
     const ERR_SLEEP_FAILED: UInt32 = 6;
+
+    const ERR_INVALID_DOMAIN: UInt32 = 7;
+    const ERR_K_ANCHOR_REQUIRED: UInt32 = 8;
+    const ERR_CAPABILITY_INVALID: UInt32 = 9;
+    const ERR_CAPABILITY_UNAUTHORIZED: UInt32 = 10;
+    const ERR_CONTRACT_INVALID: UInt32 = 11;
+    const ERR_CONTRACT_REQUIRED: UInt32 = 12;
+    const ERR_REPLAY_INVALID: UInt32 = 13;
+    const ERR_TELEMETRY_INVALID: UInt32 = 14;
+    const ERR_TRANSITION_ROLLBACK: UInt32 = 15;
+    const ERR_DESCRIPTOR_INVALID: UInt32 = 16;
+    const ERR_LIFECYCLE_INVALID: UInt32 = 17;
+    const ERR_TRANSITION_INVALID: UInt32 = 18;
+
+    const ERR_DOMAIN_UNAUTHORIZED: UInt32 = 64;
+    const ERR_RESOURCE_EXHAUSTED: UInt32 = 65;
+    const ERR_DECOHERENCE_EXCEEDED: UInt32 = 66;
+    const ERR_COHERENCE_VIOLATION: UInt32 = 67;
+    const ERR_DOMAIN_PANIC: UInt32 = 68;
+
     const ERR_DOMAIN_NOT_AVAILABLE: UInt32 = 100;
 }
 
@@ -25,7 +46,1176 @@ forge RuntimeProcess {
     const NULL_PID: UInt32 = 0;
     const THREAD_OK: UInt32 = 0;
 
-    proc K::spawn(entry: UInt64, stack_size: UInt32) -> UInt32 {
+    // Hybrid Runtime ABI versioning and feature flags (XDV-052/XDV-081)
+    const HR_ABI_VERSION_MAJOR: UInt32 = 0;
+    const HR_ABI_VERSION_MINOR: UInt32 = 1;
+    const HR_ABI_VERSION_PATCH: UInt32 = 0;
+
+    const HR_ABI_FEATURE_CAPABILITY_CALLS: UInt64 = 1;
+    const HR_ABI_FEATURE_RESOURCE_CONTRACTS: UInt64 = 2;
+    const HR_ABI_FEATURE_REPLAY_HOOKS: UInt64 = 4;
+    const HR_ABI_FEATURE_TELEMETRY_HOOKS: UInt64 = 8;
+
+    const DOMAIN_K: UInt32 = 0;
+    const DOMAIN_Q: UInt32 = 1;
+    const DOMAIN_PHI: UInt32 = 2;
+
+    const PROCESS_CREATED: UInt32 = 1;
+    const PROCESS_INITIALIZED: UInt32 = 2;
+    const PROCESS_DOMAIN_BOUND: UInt32 = 3;
+    const PROCESS_ACTIVE: UInt32 = 4;
+    const PROCESS_SUSPENDED: UInt32 = 5;
+    const PROCESS_TERMINATED: UInt32 = 6;
+
+    const CALL_KIND_IPC: UInt32 = 1;
+    const CALL_KIND_TRANSITION: UInt32 = 2;
+    const CALL_KIND_INVOKE: UInt32 = 3;
+
+    const CAP_CALL_K: UInt64 = 1;
+    const CAP_CALL_Q: UInt64 = 2;
+    const CAP_CALL_PHI: UInt64 = 4;
+    const CAP_IPC: UInt64 = 8;
+    const CAP_TRANSITION: UInt64 = 16;
+    const CAP_CONTRACT_BIND: UInt64 = 32;
+    const CAP_SYSCALL: UInt64 = 64;
+    const CAP_REPLAY: UInt64 = 128;
+    const CAP_TELEMETRY: UInt64 = 256;
+
+    const CAP_DOMAIN_FACTOR: UInt64 = 1000000000000;
+    const CAP_FLAGS_FACTOR: UInt64 = 1000000000;
+    const CAP_RAW_CYCLE: UInt64 = 1000000000;
+
+    const CONTRACT_DOMAIN_FACTOR: UInt64 = 1000000000000000;
+    const CONTRACT_ACTIVE_FACTOR: UInt64 = 100000000000000;
+    const CONTRACT_START_FACTOR: UInt64 = 10000000000;
+    const CONTRACT_DURATION_FACTOR: UInt64 = 100000000;
+    const CONTRACT_START_CYCLE: UInt64 = 10000;
+    const CONTRACT_DURATION_CYCLE: UInt64 = 100;
+    const CONTRACT_ID_CYCLE: UInt64 = 100000000;
+
+    const CONTEXT_PID_FACTOR: UInt64 = 1000000000000;
+    const CONTEXT_VHM_FACTOR: UInt64 = 100000000;
+    const CONTEXT_LIFECYCLE_FACTOR: UInt64 = 1000000;
+    const CONTEXT_AFFINITY_FACTOR: UInt64 = 100;
+    const CONTEXT_PID_CYCLE: UInt64 = 1000000;
+    const CONTEXT_VHM_CYCLE: UInt64 = 10000;
+    const CONTEXT_AFFINITY_CYCLE: UInt64 = 10000;
+
+    const EVENT_KIND_IPC_DELIVERED: UInt32 = 1;
+    const EVENT_KIND_IPC_REJECTED: UInt32 = 2;
+    const EVENT_KIND_TRANSITION_COMMIT: UInt32 = 3;
+    const EVENT_KIND_TRANSITION_ROLLBACK: UInt32 = 4;
+    const EVENT_KIND_CALL_COMMIT: UInt32 = 5;
+    const EVENT_KIND_CALL_DENIED: UInt32 = 6;
+    const EVENT_KIND_SYSCALL: UInt32 = 7;
+
+    const EVENT_KIND_FACTOR: UInt64 = 1000000000000000;
+    const EVENT_STATUS_FACTOR: UInt64 = 10000000000000;
+    const EVENT_TS_FACTOR: UInt64 = 1000000000;
+    const EVENT_PID_FACTOR: UInt64 = 1000000;
+    const EVENT_DOMAIN_FACTOR: UInt64 = 1000;
+    const EVENT_CYCLE: UInt64 = 1000;
+
+    const TELEMETRY_KIND_FACTOR: UInt64 = 1000000000000;
+    const TELEMETRY_DOMAIN_FACTOR: UInt64 = 10000000000;
+    const TELEMETRY_VALUE_FACTOR: UInt64 = 100000;
+    const TELEMETRY_VALUE_CYCLE: UInt64 = 100000;
+
+    const IPC_STATUS_FACTOR: UInt64 = 100000000000000;
+    const IPC_EVENT_FACTOR: UInt64 = 100000;
+    const IPC_EVENT_CYCLE: UInt64 = 1000000000;
+    const IPC_COST_CYCLE: UInt64 = 100000;
+
+    const SYSCALL_STATUS_FACTOR: UInt64 = 1000000000000;
+    const SYSCALL_VALUE_CYCLE: UInt64 = 1000000000000;
+
+    const CROSS_BASE_K_TO_Q: UInt64 = 40;
+    const CROSS_BASE_Q_TO_K: UInt64 = 30;
+    const CROSS_BASE_K_TO_PHI: UInt64 = 45;
+    const CROSS_BASE_PHI_TO_K: UInt64 = 35;
+    const CROSS_BASE_Q_TO_PHI: UInt64 = 60;
+    const CROSS_BASE_PHI_TO_Q: UInt64 = 60;
+    const CROSS_BASE_LOCAL: UInt64 = 5;
+
+    const MAX_Q_CROSSING_COST: UInt64 = 8192;
+    const MAX_PHI_CROSSING_COST: UInt64 = 8192;
+
+    proc K::runtime_abi_init() -> UInt32 {
+        emit "xdv-runtime-process: hybrid runtime abi online";
+        return ERR_OK;
+    }
+
+    proc K::hr_abi_version_major() -> UInt32 {
+        return HR_ABI_VERSION_MAJOR;
+    }
+
+    proc K::hr_abi_version_minor() -> UInt32 {
+        return HR_ABI_VERSION_MINOR;
+    }
+
+    proc K::hr_abi_version_patch() -> UInt32 {
+        return HR_ABI_VERSION_PATCH;
+    }
+
+    proc K::hr_abi_feature_flags() -> UInt64 {
+        return HR_ABI_FEATURE_CAPABILITY_CALLS
+            + HR_ABI_FEATURE_RESOURCE_CONTRACTS
+            + HR_ABI_FEATURE_REPLAY_HOOKS
+            + HR_ABI_FEATURE_TELEMETRY_HOOKS;
+    }
+
+    proc K::normalize_u64(value: UInt64, cycle: UInt64) -> UInt64 {
+        if cycle == 0 {
+            return 0;
+        } else {
+            let quotient = value / cycle;
+            return value - (quotient * cycle);
+        }
+    }
+
+    proc K::has_flag(mask: UInt64, flag: UInt64) -> UInt32 {
+        if flag == 0 {
+            return 0;
+        } else {
+            let masked = mask & flag;
+            if masked == flag {
+                return 1;
+            } else {
+                return 0;
+            }
+        }
+    }
+
+    proc K::is_valid_domain(domain: UInt32) -> UInt32 {
+        if domain == DOMAIN_K {
+            return 1;
+        } else {
+            if domain == DOMAIN_Q {
+                return 1;
+            } else {
+                if domain == DOMAIN_PHI {
+                    return 1;
+                } else {
+                    return 0;
+                }
+            }
+        }
+    }
+
+    proc K::domain_requires_contract(domain: UInt32) -> UInt32 {
+        if domain == DOMAIN_Q {
+            return 1;
+        } else {
+            if domain == DOMAIN_PHI {
+                return 1;
+            } else {
+                return 0;
+            }
+        }
+    }
+
+    proc K::is_valid_lifecycle_state(state: UInt32) -> UInt32 {
+        if state == PROCESS_CREATED {
+            return 1;
+        } else {
+            if state == PROCESS_INITIALIZED {
+                return 1;
+            } else {
+                if state == PROCESS_DOMAIN_BOUND {
+                    return 1;
+                } else {
+                    if state == PROCESS_ACTIVE {
+                        return 1;
+                    } else {
+                        if state == PROCESS_SUSPENDED {
+                            return 1;
+                        } else {
+                            if state == PROCESS_TERMINATED {
+                                return 1;
+                            } else {
+                                return 0;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    proc K::is_valid_lifecycle_transition(current_state: UInt32, next_state: UInt32) -> UInt32 {
+        if current_state == PROCESS_CREATED {
+            if next_state == PROCESS_INITIALIZED {
+                return 1;
+            } else {
+                return 0;
+            }
+        } else {
+            if current_state == PROCESS_INITIALIZED {
+                if next_state == PROCESS_DOMAIN_BOUND {
+                    return 1;
+                } else {
+                    return 0;
+                }
+            } else {
+                if current_state == PROCESS_DOMAIN_BOUND {
+                    if next_state == PROCESS_ACTIVE {
+                        return 1;
+                    } else {
+                        return 0;
+                    }
+                } else {
+                    if current_state == PROCESS_ACTIVE {
+                        if next_state == PROCESS_SUSPENDED {
+                            return 1;
+                        } else {
+                            if next_state == PROCESS_TERMINATED {
+                                return 1;
+                            } else {
+                                return 0;
+                            }
+                        }
+                    } else {
+                        if current_state == PROCESS_SUSPENDED {
+                            if next_state == PROCESS_ACTIVE {
+                                return 1;
+                            } else {
+                                if next_state == PROCESS_TERMINATED {
+                                    return 1;
+                                } else {
+                                    return 0;
+                                }
+                            }
+                        } else {
+                            return 0;
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    proc K::required_capability_for_call(target_domain: UInt32, call_kind: UInt32) -> UInt64 {
+        if call_kind == CALL_KIND_IPC {
+            if target_domain == DOMAIN_K {
+                return CAP_IPC + CAP_CALL_K;
+            } else {
+                if target_domain == DOMAIN_Q {
+                    return CAP_IPC + CAP_CALL_Q;
+                } else {
+                    if target_domain == DOMAIN_PHI {
+                        return CAP_IPC + CAP_CALL_PHI;
+                    } else {
+                        return 0;
+                    }
+                }
+            }
+        } else {
+            if call_kind == CALL_KIND_TRANSITION {
+                if target_domain == DOMAIN_K {
+                    return CAP_TRANSITION + CAP_CALL_K;
+                } else {
+                    if target_domain == DOMAIN_Q {
+                        return CAP_TRANSITION + CAP_CALL_Q + CAP_CONTRACT_BIND;
+                    } else {
+                        if target_domain == DOMAIN_PHI {
+                            return CAP_TRANSITION + CAP_CALL_PHI + CAP_CONTRACT_BIND;
+                        } else {
+                            return 0;
+                        }
+                    }
+                }
+            } else {
+                if call_kind == CALL_KIND_INVOKE {
+                    if target_domain == DOMAIN_K {
+                        return CAP_CALL_K;
+                    } else {
+                        if target_domain == DOMAIN_Q {
+                            return CAP_CALL_Q + CAP_CONTRACT_BIND;
+                        } else {
+                            if target_domain == DOMAIN_PHI {
+                                return CAP_CALL_PHI + CAP_CONTRACT_BIND;
+                            } else {
+                                return 0;
+                            }
+                        }
+                    }
+                } else {
+                    return 0;
+                }
+            }
+        }
+    }
+
+    proc K::pack_capability_handle(raw_id: UInt64, domain: UInt32, flags: UInt64) -> UInt64 {
+        let valid_domain = is_valid_domain(domain);
+        if valid_domain == 1 {
+        } else {
+            return 0;
+        }
+
+        if raw_id == 0 {
+            return 0;
+        }
+
+        if flags == 0 {
+            return 0;
+        }
+
+        let raw_norm = normalize_u64(raw_id, CAP_RAW_CYCLE);
+        return (domain * CAP_DOMAIN_FACTOR) + (flags * CAP_FLAGS_FACTOR) + raw_norm;
+    }
+
+    proc K::capability_handle_domain(capability_handle: UInt64) -> UInt32 {
+        return capability_handle / CAP_DOMAIN_FACTOR;
+    }
+
+    proc K::capability_handle_flags(capability_handle: UInt64) -> UInt64 {
+        let domain = capability_handle_domain(capability_handle);
+        let rem = capability_handle - (domain * CAP_DOMAIN_FACTOR);
+        return rem / CAP_FLAGS_FACTOR;
+    }
+
+    proc K::capability_handle_raw_id(capability_handle: UInt64) -> UInt64 {
+        let domain = capability_handle_domain(capability_handle);
+        let flags = capability_handle_flags(capability_handle);
+        let rem = capability_handle - (domain * CAP_DOMAIN_FACTOR) - (flags * CAP_FLAGS_FACTOR);
+        return normalize_u64(rem, CAP_RAW_CYCLE);
+    }
+
+    proc K::is_valid_capability_handle(capability_handle: UInt64) -> UInt32 {
+        if capability_handle == 0 {
+            return 0;
+        }
+
+        let domain = capability_handle_domain(capability_handle);
+        let domain_ok = is_valid_domain(domain);
+        if domain_ok == 1 {
+        } else {
+            return 0;
+        }
+
+        let flags = capability_handle_flags(capability_handle);
+        if flags == 0 {
+            return 0;
+        }
+
+        let raw_id = capability_handle_raw_id(capability_handle);
+        if raw_id == 0 {
+            return 0;
+        }
+
+        return 1;
+    }
+
+    proc K::pack_resource_contract_handle(
+        contract_id: UInt64,
+        domain: UInt32,
+        start_tick: UInt32,
+        duration: UInt32,
+        active: UInt32
+    ) -> UInt64 {
+        if domain == DOMAIN_Q {
+        } else {
+            if domain == DOMAIN_PHI {
+            } else {
+                return 0;
+            }
+        }
+
+        if contract_id == 0 {
+            return 0;
+        }
+
+        if duration == 0 {
+            return 0;
+        }
+
+        if active == 0 {
+        } else {
+            if active == 1 {
+            } else {
+                return 0;
+            }
+        }
+
+        let start_norm = normalize_u64(start_tick, CONTRACT_START_CYCLE);
+        let duration_norm = normalize_u64(duration, CONTRACT_DURATION_CYCLE);
+        let id_norm = normalize_u64(contract_id, CONTRACT_ID_CYCLE);
+
+        return (domain * CONTRACT_DOMAIN_FACTOR)
+            + (active * CONTRACT_ACTIVE_FACTOR)
+            + (start_norm * CONTRACT_START_FACTOR)
+            + (duration_norm * CONTRACT_DURATION_FACTOR)
+            + id_norm;
+    }
+
+    proc K::contract_handle_domain(contract_handle: UInt64) -> UInt32 {
+        return contract_handle / CONTRACT_DOMAIN_FACTOR;
+    }
+
+    proc K::contract_handle_active(contract_handle: UInt64) -> UInt32 {
+        let domain = contract_handle_domain(contract_handle);
+        let rem = contract_handle - (domain * CONTRACT_DOMAIN_FACTOR);
+        return rem / CONTRACT_ACTIVE_FACTOR;
+    }
+
+    proc K::contract_handle_start_tick(contract_handle: UInt64) -> UInt32 {
+        let domain = contract_handle_domain(contract_handle);
+        let active = contract_handle_active(contract_handle);
+        let rem = contract_handle - (domain * CONTRACT_DOMAIN_FACTOR) - (active * CONTRACT_ACTIVE_FACTOR);
+        return rem / CONTRACT_START_FACTOR;
+    }
+
+    proc K::contract_handle_duration(contract_handle: UInt64) -> UInt32 {
+        let domain = contract_handle_domain(contract_handle);
+        let active = contract_handle_active(contract_handle);
+        let start_tick = contract_handle_start_tick(contract_handle);
+        let rem = contract_handle - (domain * CONTRACT_DOMAIN_FACTOR) - (active * CONTRACT_ACTIVE_FACTOR) - (start_tick * CONTRACT_START_FACTOR);
+        return rem / CONTRACT_DURATION_FACTOR;
+    }
+
+    proc K::contract_handle_id(contract_handle: UInt64) -> UInt64 {
+        let domain = contract_handle_domain(contract_handle);
+        let active = contract_handle_active(contract_handle);
+        let start_tick = contract_handle_start_tick(contract_handle);
+        let duration = contract_handle_duration(contract_handle);
+        let rem = contract_handle - (domain * CONTRACT_DOMAIN_FACTOR) - (active * CONTRACT_ACTIVE_FACTOR) - (start_tick * CONTRACT_START_FACTOR) - (duration * CONTRACT_DURATION_FACTOR);
+        return normalize_u64(rem, CONTRACT_ID_CYCLE);
+    }
+
+    proc K::contract_is_active_at(contract_handle: UInt64, logical_timestamp: UInt32) -> UInt32 {
+        if contract_handle == 0 {
+            return 0;
+        }
+
+        let domain = contract_handle_domain(contract_handle);
+        if domain == DOMAIN_Q {
+        } else {
+            if domain == DOMAIN_PHI {
+            } else {
+                return 0;
+            }
+        }
+
+        let active = contract_handle_active(contract_handle);
+        if active == 1 {
+        } else {
+            return 0;
+        }
+
+        let start_tick = contract_handle_start_tick(contract_handle);
+        let duration = contract_handle_duration(contract_handle);
+        if duration == 0 {
+            return 0;
+        }
+
+        if logical_timestamp < start_tick {
+            return 0;
+        }
+
+        let elapsed = logical_timestamp - start_tick;
+        if elapsed <= duration {
+            return 1;
+        } else {
+            return 0;
+        }
+    }
+
+    proc K::validate_contract_for_target(contract_handle: UInt64, target_domain: UInt32, logical_timestamp: UInt32) -> UInt32 {
+        let requires_contract = domain_requires_contract(target_domain);
+        if requires_contract == 1 {
+        } else {
+            return ERR_OK;
+        }
+
+        if contract_handle == 0 {
+            return ERR_CONTRACT_REQUIRED;
+        }
+
+        let contract_domain = contract_handle_domain(contract_handle);
+        if contract_domain == target_domain {
+        } else {
+            return ERR_CONTRACT_INVALID;
+        }
+
+        let active = contract_is_active_at(contract_handle, logical_timestamp);
+        if active == 1 {
+            return ERR_OK;
+        } else {
+            return ERR_CONTRACT_INVALID;
+        }
+    }
+
+    proc K::pack_process_context(
+        pid: UInt32,
+        vhm_id: UInt32,
+        lifecycle_state: UInt32,
+        affinity_mask: UInt32
+    ) -> UInt64 {
+        if pid == NULL_PID {
+            return 0;
+        }
+
+        let lifecycle_ok = is_valid_lifecycle_state(lifecycle_state);
+        if lifecycle_ok == 1 {
+        } else {
+            return 0;
+        }
+
+        let pid_norm = normalize_u64(pid, CONTEXT_PID_CYCLE);
+        let vhm_norm = normalize_u64(vhm_id, CONTEXT_VHM_CYCLE);
+        let affinity_norm = normalize_u64(affinity_mask, CONTEXT_AFFINITY_CYCLE);
+
+        return (pid_norm * CONTEXT_PID_FACTOR)
+            + (vhm_norm * CONTEXT_VHM_FACTOR)
+            + (lifecycle_state * CONTEXT_LIFECYCLE_FACTOR)
+            + (affinity_norm * CONTEXT_AFFINITY_FACTOR)
+            + DOMAIN_K;
+    }
+
+    proc K::process_context_pid(context_handle: UInt64) -> UInt32 {
+        return context_handle / CONTEXT_PID_FACTOR;
+    }
+
+    proc K::process_context_vhm_id(context_handle: UInt64) -> UInt32 {
+        let pid = process_context_pid(context_handle);
+        let rem = context_handle - (pid * CONTEXT_PID_FACTOR);
+        return rem / CONTEXT_VHM_FACTOR;
+    }
+
+    proc K::process_context_lifecycle(context_handle: UInt64) -> UInt32 {
+        let pid = process_context_pid(context_handle);
+        let vhm = process_context_vhm_id(context_handle);
+        let rem = context_handle - (pid * CONTEXT_PID_FACTOR) - (vhm * CONTEXT_VHM_FACTOR);
+        return rem / CONTEXT_LIFECYCLE_FACTOR;
+    }
+
+    proc K::process_context_affinity(context_handle: UInt64) -> UInt32 {
+        let pid = process_context_pid(context_handle);
+        let vhm = process_context_vhm_id(context_handle);
+        let lifecycle = process_context_lifecycle(context_handle);
+        let rem = context_handle - (pid * CONTEXT_PID_FACTOR) - (vhm * CONTEXT_VHM_FACTOR) - (lifecycle * CONTEXT_LIFECYCLE_FACTOR);
+        return rem / CONTEXT_AFFINITY_FACTOR;
+    }
+
+    proc K::process_context_anchor_domain(context_handle: UInt64) -> UInt32 {
+        return normalize_u64(context_handle, CONTEXT_AFFINITY_FACTOR);
+    }
+
+    proc K::process_context_is_k_anchored(context_handle: UInt64) -> UInt32 {
+        let anchor = process_context_anchor_domain(context_handle);
+        if anchor == DOMAIN_K {
+            return 1;
+        } else {
+            return 0;
+        }
+    }
+
+    proc K::pack_ipc_result(status: UInt32, event_id: UInt64, crossing_cost: UInt64) -> UInt64 {
+        let event_norm = normalize_u64(event_id, IPC_EVENT_CYCLE);
+        let cost_norm = normalize_u64(crossing_cost, IPC_COST_CYCLE);
+        return (status * IPC_STATUS_FACTOR) + (event_norm * IPC_EVENT_FACTOR) + cost_norm;
+    }
+
+    proc K::ipc_result_status(packed: UInt64) -> UInt32 {
+        return packed / IPC_STATUS_FACTOR;
+    }
+
+    proc K::ipc_result_event_id(packed: UInt64) -> UInt64 {
+        let status = ipc_result_status(packed);
+        let rem = packed - (status * IPC_STATUS_FACTOR);
+        return rem / IPC_EVENT_FACTOR;
+    }
+
+    proc K::ipc_result_crossing_cost(packed: UInt64) -> UInt64 {
+        let status = ipc_result_status(packed);
+        let event_id = ipc_result_event_id(packed);
+        return packed - (status * IPC_STATUS_FACTOR) - (event_id * IPC_EVENT_FACTOR);
+    }
+
+    proc K::pack_syscall_result(status: UInt32, value: UInt64) -> UInt64 {
+        let value_norm = normalize_u64(value, SYSCALL_VALUE_CYCLE);
+        return (status * SYSCALL_STATUS_FACTOR) + value_norm;
+    }
+
+    proc K::syscall_result_status(packed: UInt64) -> UInt32 {
+        return packed / SYSCALL_STATUS_FACTOR;
+    }
+
+    proc K::syscall_result_value(packed: UInt64) -> UInt64 {
+        let status = syscall_result_status(packed);
+        return packed - (status * SYSCALL_STATUS_FACTOR);
+    }
+
+    proc K::runtime_domain_crossing_cost(
+        source_domain: UInt32,
+        target_domain: UInt32,
+        payload_size: UInt32,
+        security_validation_time: UInt32
+    ) -> UInt64 {
+        if source_domain == target_domain {
+            return CROSS_BASE_LOCAL + payload_size + security_validation_time;
+        } else {
+            if source_domain == DOMAIN_K {
+                if target_domain == DOMAIN_Q {
+                    return CROSS_BASE_K_TO_Q + payload_size + (security_validation_time * 2);
+                } else {
+                    if target_domain == DOMAIN_PHI {
+                        return CROSS_BASE_K_TO_PHI + payload_size + (security_validation_time * 2);
+                    } else {
+                        return CROSS_BASE_LOCAL + payload_size + security_validation_time;
+                    }
+                }
+            } else {
+                if source_domain == DOMAIN_Q {
+                    if target_domain == DOMAIN_K {
+                        return CROSS_BASE_Q_TO_K + payload_size + (security_validation_time * 2);
+                    } else {
+                        if target_domain == DOMAIN_PHI {
+                            return CROSS_BASE_Q_TO_PHI + payload_size + (security_validation_time * 3);
+                        } else {
+                            return CROSS_BASE_LOCAL + payload_size + security_validation_time;
+                        }
+                    }
+                } else {
+                    if source_domain == DOMAIN_PHI {
+                        if target_domain == DOMAIN_K {
+                            return CROSS_BASE_PHI_TO_K + payload_size + (security_validation_time * 2);
+                        } else {
+                            if target_domain == DOMAIN_Q {
+                                return CROSS_BASE_PHI_TO_Q + payload_size + (security_validation_time * 3);
+                            } else {
+                                return CROSS_BASE_LOCAL + payload_size + security_validation_time;
+                            }
+                        }
+                    } else {
+                        return CROSS_BASE_LOCAL + payload_size + security_validation_time;
+                    }
+                }
+            }
+        }
+    }
+
+    proc K::runtime_record_event(
+        event_kind: UInt32,
+        status: UInt32,
+        logical_timestamp: UInt32,
+        pid: UInt32,
+        source_domain: UInt32,
+        target_domain: UInt32,
+        capability_handle: UInt64,
+        contract_handle: UInt64
+    ) -> UInt64 {
+        let cap_mix = normalize_u64(capability_handle, EVENT_CYCLE);
+        let contract_mix = normalize_u64(contract_handle, EVENT_CYCLE);
+        let mixed = normalize_u64(cap_mix + contract_mix, EVENT_CYCLE);
+
+        return (event_kind * EVENT_KIND_FACTOR)
+            + (status * EVENT_STATUS_FACTOR)
+            + (logical_timestamp * EVENT_TS_FACTOR)
+            + (pid * EVENT_PID_FACTOR)
+            + (source_domain * EVENT_DOMAIN_FACTOR)
+            + (target_domain * 10)
+            + mixed;
+    }
+
+    proc K::runtime_emit_telemetry(metric_kind: UInt32, domain: UInt32, value: UInt64, logical_timestamp: UInt32) -> UInt64 {
+        let valid_domain = is_valid_domain(domain);
+        if valid_domain == 1 {
+        } else {
+            return 0;
+        }
+
+        let value_norm = normalize_u64(value, TELEMETRY_VALUE_CYCLE);
+        return (metric_kind * TELEMETRY_KIND_FACTOR)
+            + (domain * TELEMETRY_DOMAIN_FACTOR)
+            + (value_norm * TELEMETRY_VALUE_FACTOR)
+            + logical_timestamp;
+    }
+
+    proc K::runtime_apply_replay_outcome(status: UInt32, replay_mode: UInt32, replay_outcome: UInt32) -> UInt32 {
+        if replay_mode == 0 {
+            return status;
+        } else {
+            if replay_mode == 1 {
+                return replay_outcome;
+            } else {
+                return ERR_REPLAY_INVALID;
+            }
+        }
+    }
+
+    proc K::validate_capability_for_call(
+        source_domain: UInt32,
+        target_domain: UInt32,
+        call_kind: UInt32,
+        capability_handle: UInt64
+    ) -> UInt32 {
+        let valid_capability = is_valid_capability_handle(capability_handle);
+        if valid_capability == 1 {
+        } else {
+            return ERR_CAPABILITY_INVALID;
+        }
+
+        let capability_domain = capability_handle_domain(capability_handle);
+        if capability_domain == source_domain {
+        } else {
+            if capability_domain == DOMAIN_K {
+            } else {
+                return ERR_CAPABILITY_UNAUTHORIZED;
+            }
+        }
+
+        let required = required_capability_for_call(target_domain, call_kind);
+        if required == 0 {
+            return ERR_CAPABILITY_UNAUTHORIZED;
+        }
+
+        let flags = capability_handle_flags(capability_handle);
+        let authorized = has_flag(flags, required);
+        if authorized == 1 {
+            return ERR_OK;
+        } else {
+            return ERR_CAPABILITY_UNAUTHORIZED;
+        }
+    }
+
+    proc K::validate_domain_call(
+        source_domain: UInt32,
+        target_domain: UInt32,
+        descriptor_ptr: UInt64,
+        capability_handle: UInt64,
+        contract_handle: UInt64,
+        logical_timestamp: UInt32,
+        call_kind: UInt32
+    ) -> UInt32 {
+        let source_valid = is_valid_domain(source_domain);
+        if source_valid == 1 {
+        } else {
+            return ERR_INVALID_DOMAIN;
+        }
+
+        let target_valid = is_valid_domain(target_domain);
+        if target_valid == 1 {
+        } else {
+            return ERR_INVALID_DOMAIN;
+        }
+
+        if descriptor_ptr == 0 {
+            return ERR_DESCRIPTOR_INVALID;
+        }
+
+        if logical_timestamp == 0 {
+            return ERR_DESCRIPTOR_INVALID;
+        }
+
+        let cap_status = validate_capability_for_call(source_domain, target_domain, call_kind, capability_handle);
+        if cap_status == ERR_OK {
+        } else {
+            return cap_status;
+        }
+
+        let contract_status = validate_contract_for_target(contract_handle, target_domain, logical_timestamp);
+        return contract_status;
+    }
+
+    proc K::runtime_validate_process_domain_binding(
+        pid: UInt32,
+        source_domain: UInt32,
+        target_domain: UInt32,
+        capability_handle: UInt64,
+        contract_handle: UInt64,
+        logical_timestamp: UInt32
+    ) -> UInt32 {
+        if pid == NULL_PID {
+            return ERR_INVALID_PID;
+        }
+
+        if source_domain == DOMAIN_K {
+        } else {
+            return ERR_K_ANCHOR_REQUIRED;
+        }
+
+        return validate_domain_call(
+            source_domain,
+            target_domain,
+            pid,
+            capability_handle,
+            contract_handle,
+            logical_timestamp,
+            CALL_KIND_TRANSITION
+        );
+    }
+
+    proc K::runtime_bind_process_domain(
+        pid: UInt32,
+        source_domain: UInt32,
+        target_domain: UInt32,
+        capability_handle: UInt64,
+        contract_handle: UInt64,
+        logical_timestamp: UInt32
+    ) -> UInt32 {
+        let status = runtime_validate_process_domain_binding(
+            pid,
+            source_domain,
+            target_domain,
+            capability_handle,
+            contract_handle,
+            logical_timestamp
+        );
+
+        if status == ERR_OK {
+            runtime_record_event(
+                EVENT_KIND_TRANSITION_COMMIT,
+                ERR_OK,
+                logical_timestamp,
+                pid,
+                source_domain,
+                target_domain,
+                capability_handle,
+                contract_handle
+            );
+            return ERR_OK;
+        } else {
+            runtime_record_event(
+                EVENT_KIND_TRANSITION_ROLLBACK,
+                status,
+                logical_timestamp,
+                pid,
+                source_domain,
+                target_domain,
+                capability_handle,
+                contract_handle
+            );
+            return status;
+        }
+    }
+
+    proc K::runtime_transition_request(
+        pid: UInt32,
+        source_domain: UInt32,
+        target_domain: UInt32,
+        descriptor_ptr: UInt64,
+        capability_handle: UInt64,
+        contract_handle: UInt64,
+        logical_timestamp: UInt32,
+        provider_attested: UInt32,
+        replay_mode: UInt32,
+        replay_outcome: UInt32
+    ) -> UInt32 {
+        let call_status = validate_domain_call(
+            source_domain,
+            target_domain,
+            descriptor_ptr,
+            capability_handle,
+            contract_handle,
+            logical_timestamp,
+            CALL_KIND_TRANSITION
+        );
+
+        if call_status == ERR_OK {
+        } else {
+            runtime_record_event(
+                EVENT_KIND_TRANSITION_ROLLBACK,
+                call_status,
+                logical_timestamp,
+                pid,
+                source_domain,
+                target_domain,
+                capability_handle,
+                contract_handle
+            );
+            return runtime_apply_replay_outcome(call_status, replay_mode, replay_outcome);
+        }
+
+        let crossing_cost = runtime_domain_crossing_cost(source_domain, target_domain, 64, 4);
+
+        if target_domain == DOMAIN_Q {
+            if crossing_cost > MAX_Q_CROSSING_COST {
+                runtime_record_event(
+                    EVENT_KIND_TRANSITION_ROLLBACK,
+                    ERR_DECOHERENCE_EXCEEDED,
+                    logical_timestamp,
+                    pid,
+                    source_domain,
+                    target_domain,
+                    capability_handle,
+                    contract_handle
+                );
+                return runtime_apply_replay_outcome(ERR_DECOHERENCE_EXCEEDED, replay_mode, replay_outcome);
+            }
+        }
+
+        if target_domain == DOMAIN_PHI {
+            if crossing_cost > MAX_PHI_CROSSING_COST {
+                runtime_record_event(
+                    EVENT_KIND_TRANSITION_ROLLBACK,
+                    ERR_COHERENCE_VIOLATION,
+                    logical_timestamp,
+                    pid,
+                    source_domain,
+                    target_domain,
+                    capability_handle,
+                    contract_handle
+                );
+                return runtime_apply_replay_outcome(ERR_COHERENCE_VIOLATION, replay_mode, replay_outcome);
+            }
+        }
+
+        if target_domain == DOMAIN_K {
+        } else {
+            if provider_attested == 1 {
+            } else {
+                runtime_record_event(
+                    EVENT_KIND_TRANSITION_ROLLBACK,
+                    ERR_DOMAIN_UNAUTHORIZED,
+                    logical_timestamp,
+                    pid,
+                    source_domain,
+                    target_domain,
+                    capability_handle,
+                    contract_handle
+                );
+                return runtime_apply_replay_outcome(ERR_DOMAIN_UNAUTHORIZED, replay_mode, replay_outcome);
+            }
+        }
+
+        let event_id = runtime_record_event(
+            EVENT_KIND_TRANSITION_COMMIT,
+            ERR_OK,
+            logical_timestamp,
+            pid,
+            source_domain,
+            target_domain,
+            capability_handle,
+            contract_handle
+        );
+
+        runtime_emit_telemetry(1, target_domain, crossing_cost + event_id, logical_timestamp);
+        return runtime_apply_replay_outcome(ERR_OK, replay_mode, replay_outcome);
+    }
+
+    proc K::runtime_xdv_call(
+        source_domain: UInt32,
+        target_domain: UInt32,
+        descriptor_ptr: UInt64,
+        capability_handle: UInt64,
+        contract_handle: UInt64,
+        logical_timestamp: UInt32,
+        replay_mode: UInt32,
+        replay_outcome: UInt32
+    ) -> UInt32 {
+        let call_status = validate_domain_call(
+            source_domain,
+            target_domain,
+            descriptor_ptr,
+            capability_handle,
+            contract_handle,
+            logical_timestamp,
+            CALL_KIND_INVOKE
+        );
+
+        if call_status == ERR_OK {
+            let crossing_cost = runtime_domain_crossing_cost(source_domain, target_domain, 32, 3);
+            let event_id = runtime_record_event(
+                EVENT_KIND_CALL_COMMIT,
+                ERR_OK,
+                logical_timestamp,
+                INIT_PID,
+                source_domain,
+                target_domain,
+                capability_handle,
+                contract_handle
+            );
+            runtime_emit_telemetry(2, target_domain, crossing_cost + event_id, logical_timestamp);
+            return runtime_apply_replay_outcome(ERR_OK, replay_mode, replay_outcome);
+        } else {
+            runtime_record_event(
+                EVENT_KIND_CALL_DENIED,
+                call_status,
+                logical_timestamp,
+                INIT_PID,
+                source_domain,
+                target_domain,
+                capability_handle,
+                contract_handle
+            );
+            return runtime_apply_replay_outcome(call_status, replay_mode, replay_outcome);
+        }
+    }
+
+    proc K::runtime_send_cross_domain_ipc(
+        sender_pid: UInt32,
+        receiver_pid: UInt32,
+        source_domain: UInt32,
+        target_domain: UInt32,
+        payload_ptr: UInt64,
+        payload_size: UInt32,
+        capability_handle: UInt64,
+        contract_handle: UInt64,
+        logical_timestamp: UInt32,
+        replay_mode: UInt32,
+        replay_outcome: UInt32
+    ) -> UInt64 {
+        if sender_pid == NULL_PID {
+            return pack_ipc_result(ERR_INVALID_PID, 0, 0);
+        }
+
+        if receiver_pid == NULL_PID {
+            return pack_ipc_result(ERR_INVALID_PID, 0, 0);
+        }
+
+        if payload_ptr == 0 {
+            return pack_ipc_result(ERR_DESCRIPTOR_INVALID, 0, 0);
+        }
+
+        if payload_size == 0 {
+            return pack_ipc_result(ERR_DESCRIPTOR_INVALID, 0, 0);
+        }
+
+        let validation = validate_domain_call(
+            source_domain,
+            target_domain,
+            payload_ptr,
+            capability_handle,
+            contract_handle,
+            logical_timestamp,
+            CALL_KIND_IPC
+        );
+
+        if validation == ERR_OK {
+            let crossing_cost = runtime_domain_crossing_cost(source_domain, target_domain, payload_size, 2);
+            let delivered_status = runtime_apply_replay_outcome(ERR_OK, replay_mode, replay_outcome);
+            let event_id = runtime_record_event(
+                EVENT_KIND_IPC_DELIVERED,
+                delivered_status,
+                logical_timestamp,
+                sender_pid,
+                source_domain,
+                target_domain,
+                capability_handle,
+                contract_handle
+            );
+            runtime_emit_telemetry(3, target_domain, crossing_cost, logical_timestamp);
+            return pack_ipc_result(delivered_status, event_id, crossing_cost);
+        } else {
+            let rejected_status = runtime_apply_replay_outcome(validation, replay_mode, replay_outcome);
+            let event_id = runtime_record_event(
+                EVENT_KIND_IPC_REJECTED,
+                rejected_status,
+                logical_timestamp,
+                sender_pid,
+                source_domain,
+                target_domain,
+                capability_handle,
+                contract_handle
+            );
+            return pack_ipc_result(rejected_status, event_id, 0);
+        }
+    }
+
+    proc K::runtime_syscall(
+        syscall_id: UInt64,
+        args_ptr: UInt64,
+        capability_handle: UInt64,
+        logical_timestamp: UInt32,
+        replay_mode: UInt32,
+        replay_outcome: UInt32
+    ) -> UInt64 {
+        if syscall_id == 0 {
+            return pack_syscall_result(ERR_DESCRIPTOR_INVALID, 0);
+        }
+
+        if args_ptr == 0 {
+            return pack_syscall_result(ERR_DESCRIPTOR_INVALID, 0);
+        }
+
+        let valid_capability = is_valid_capability_handle(capability_handle);
+        if valid_capability == 1 {
+        } else {
+            return pack_syscall_result(ERR_CAPABILITY_INVALID, 0);
+        }
+
+        let capability_domain = capability_handle_domain(capability_handle);
+        if capability_domain == DOMAIN_K {
+        } else {
+            return pack_syscall_result(ERR_CAPABILITY_UNAUTHORIZED, 0);
+        }
+
+        let flags = capability_handle_flags(capability_handle);
+        let syscall_allowed = has_flag(flags, CAP_SYSCALL);
+        if syscall_allowed == 1 {
+        } else {
+            return pack_syscall_result(ERR_CAPABILITY_UNAUTHORIZED, 0);
+        }
+
+        let status = runtime_apply_replay_outcome(ERR_OK, replay_mode, replay_outcome);
+        let value = normalize_u64(syscall_id + args_ptr + logical_timestamp, SYSCALL_VALUE_CYCLE);
+
+        runtime_record_event(
+            EVENT_KIND_SYSCALL,
+            status,
+            logical_timestamp,
+            INIT_PID,
+            DOMAIN_K,
+            DOMAIN_K,
+            capability_handle,
+            0
+        );
+
+        runtime_emit_telemetry(4, DOMAIN_K, value, logical_timestamp);
+        return pack_syscall_result(status, value);
+    }
+
+    proc K::runtime_create_hybrid_process_context(
+        pid: UInt32,
+        vhm_id: UInt32,
+        current_lifecycle: UInt32,
+        target_lifecycle: UInt32,
+        affinity_mask: UInt32,
+        source_domain: UInt32,
+        target_domain: UInt32,
+        capability_handle: UInt64,
+        contract_handle: UInt64,
+        logical_timestamp: UInt32
+    ) -> UInt64 {
+        let current_ok = is_valid_lifecycle_state(current_lifecycle);
+        if current_ok == 1 {
+        } else {
+            return 0;
+        }
+
+        let target_ok = is_valid_lifecycle_state(target_lifecycle);
+        if target_ok == 1 {
+        } else {
+            return 0;
+        }
+
+        let transition_ok = is_valid_lifecycle_transition(current_lifecycle, target_lifecycle);
+        if transition_ok == 1 {
+        } else {
+            return 0;
+        }
+
+        let bind_status = runtime_bind_process_domain(
+            pid,
+            source_domain,
+            target_domain,
+            capability_handle,
+            contract_handle,
+            logical_timestamp
+        );
+
+        if bind_status == ERR_OK {
+            return pack_process_context(pid, vhm_id, target_lifecycle, affinity_mask);
+        } else {
+            return 0;
+        }
+    }
+
+    // Compatibility wrappers retained for existing runtime callers.
+
+    proc K::spawn_process(entry: UInt64, stack_size: UInt32) -> UInt32 {
         if entry == 0 {
             return NULL_PID;
         } else {
@@ -52,7 +1242,7 @@ forge RuntimeProcess {
         }
     }
 
-    proc K::join(pid: UInt32) -> UInt64 {
+    proc K::join_process(pid: UInt32) -> UInt64 {
         if pid == NULL_PID {
             return NULL_PID;
         } else {
@@ -65,7 +1255,7 @@ forge RuntimeProcess {
         }
     }
 
-    proc K::exit(pid: UInt32, code: UInt32) -> UInt32 {
+    proc K::exit_process(pid: UInt32, code: UInt32) -> UInt32 {
         if pid == NULL_PID {
             return ERR_INVALID_PID;
         } else {
@@ -78,11 +1268,11 @@ forge RuntimeProcess {
         }
     }
 
-    proc K::getpid() -> UInt32 {
+    proc K::get_pid() -> UInt32 {
         return INIT_PID;
     }
 
-    proc K::sleep(ms: UInt32) -> UInt32 {
+    proc K::sleep_process(ms: UInt32) -> UInt32 {
         let sleep_status = thread_sleep(ms);
         if sleep_status == THREAD_OK {
             return ERR_OK;
@@ -91,23 +1281,23 @@ forge RuntimeProcess {
         }
     }
 
-    proc K::yield() -> UInt32 {
-        return sleep(0);
+    proc K::yield_process() -> UInt32 {
+        return sleep_process(0);
     }
 
-    proc K::spawn_with_limit(entry: UInt64, stack_size: UInt32, pid_limit: UInt32) -> UInt32 {
+    proc K::spawn_process_with_limit(entry: UInt64, stack_size: UInt32, pid_limit: UInt32) -> UInt32 {
         if pid_limit == 0 {
             return NULL_PID;
         } else {
             if pid_limit > MAX_PROCESSES {
                 return NULL_PID;
             } else {
-                return spawn(entry, stack_size);
+                return spawn_process(entry, stack_size);
             }
         }
     }
 
-    proc K::is_valid_pid(pid: UInt32) -> UInt32 {
+    proc K::validate_pid(pid: UInt32) -> UInt32 {
         if pid == NULL_PID {
             return ERR_INVALID_PID;
         } else {

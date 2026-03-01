@@ -1,41 +1,20 @@
-﻿# runtime_process_tests
+# runtime_process_tests
 
 - Source: `xdv-runtime/src/runtime_process_tests.ds`
 - Kind: Test Module
-- Summary: normalized test harness for parser compatibility.
+- Summary: Deterministic tests for ABI handles, binding rules, call enforcement, replay override, and telemetry/event packing.
 
-## Purpose
-normalized test harness for parser compatibility.
+## Covered Areas
+- Capability handle round-trip
+- Resource contract active-window validation
+- K-anchor enforcement for binding
+- Contract-required enforcement for Q/Phi
+- Capability authorization failures
+- Replay override behavior on runtime call paths
+- IPC packed result field validation
+- Syscall result packing/unpacking
+- Transition attestation requirement
+- Process context creation and K-anchor verification
 
-## Forge Overview
-| Forge | Constants | Procedures |
-|---|---:|---:|
-| `RuntimeProcessTests` | 0 | 1 |
-
-## API By Forge
-### RuntimeProcessTests
-
-#### Procedures
-| Domain | Procedure | Parameters | Returns | Description |
-|---|---|---|---|---|
-| `K` | `run_all_tests` | `(none)` | `UInt32` | Performs run all tests operation. |
-
-#### Constants
-- No constants declared in this forge.
-
-## Runtime Dependencies
-- No external call sites detected.
-
-## Integration Notes
-- Runtime modules provide K-domain implementation with Q/Phi behavior gated by runtime availability policy where applicable.
-- This module is intended for validation/test execution and should not be linked as primary runtime surface.
-
-## Example (DPL)
-```dust
-let status = run_all_tests();
-if status == 0 {
-    emit "ok";
-} else {
-    emit "failed";
-}
-```
+## Entry
+- `run_all_tests()`

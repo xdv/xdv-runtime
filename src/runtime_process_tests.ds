@@ -1,10 +1,259 @@
 // File: runtime_process_tests.ds - This file is part of XDV
 // Copyright (c) 2026 Dust LLC, and Contributors
 // Description:
-//   normalized test harness for parser compatibility.
+//   Runtime process ABI, contract, replay, and telemetry tests.
 
 forge RuntimeProcessTests {
+
+    const TEST_PASS: UInt32 = 0;
+    const TEST_FAIL: UInt32 = 1;
+
+    const ERR_OK: UInt32 = 0;
+    const ERR_K_ANCHOR_REQUIRED: UInt32 = 8;
+    const ERR_CAPABILITY_UNAUTHORIZED: UInt32 = 10;
+    const ERR_CONTRACT_REQUIRED: UInt32 = 12;
+    const ERR_DOMAIN_UNAUTHORIZED: UInt32 = 64;
+    const ERR_COHERENCE_VIOLATION: UInt32 = 67;
+
+    const DOMAIN_K: UInt32 = 0;
+    const DOMAIN_Q: UInt32 = 1;
+    const DOMAIN_PHI: UInt32 = 2;
+
+    const PROCESS_CREATED: UInt32 = 1;
+    const PROCESS_INITIALIZED: UInt32 = 2;
+
+    const CAP_CALL_K: UInt64 = 1;
+    const CAP_CALL_Q: UInt64 = 2;
+    const CAP_CALL_PHI: UInt64 = 4;
+    const CAP_IPC: UInt64 = 8;
+    const CAP_TRANSITION: UInt64 = 16;
+    const CAP_CONTRACT_BIND: UInt64 = 32;
+    const CAP_SYSCALL: UInt64 = 64;
+
+    proc K::expect_status(actual: UInt32, expected: UInt32) -> UInt32 {
+        if actual == expected {
+            return TEST_PASS;
+        } else {
+            return TEST_FAIL;
+        }
+    }
+
+    proc K::test_capability_handle_roundtrip() -> UInt32 {
+        let handle = pack_capability_handle(12345, DOMAIN_K, CAP_SYSCALL + CAP_CALL_K);
+        if handle == 0 {
+            return TEST_FAIL;
+        }
+
+        let domain = capability_handle_domain(handle);
+        let flags = capability_handle_flags(handle);
+        let raw = capability_handle_raw_id(handle);
+
+        if domain == DOMAIN_K {
+            if flags == CAP_SYSCALL + CAP_CALL_K {
+                if raw > 0 {
+                    return TEST_PASS;
+                } else {
+                    return TEST_FAIL;
+                }
+            } else {
+                return TEST_FAIL;
+            }
+        } else {
+            return TEST_FAIL;
+        }
+    }
+
+    proc K::test_contract_handle_active_window() -> UInt32 {
+        let contract_handle = pack_resource_contract_handle(9900, DOMAIN_Q, 5, 10, 1);
+        if contract_handle == 0 {
+            return TEST_FAIL;
+        }
+
+        let active_in_window = contract_is_active_at(contract_handle, 8);
+        let active_outside_window = contract_is_active_at(contract_handle, 20);
+
+        if active_in_window == 1 {
+            if active_outside_window == 0 {
+                return TEST_PASS;
+            } else {
+                return TEST_FAIL;
+            }
+        } else {
+            return TEST_FAIL;
+        }
+    }
+
+    proc K::test_bind_requires_k_anchor() -> UInt32 {
+        let cap = pack_capability_handle(4400, DOMAIN_Q, CAP_TRANSITION + CAP_CALL_Q + CAP_CONTRACT_BIND);
+        let status = runtime_bind_process_domain(7, DOMAIN_Q, DOMAIN_Q, cap, 0, 10);
+        return expect_status(status, ERR_K_ANCHOR_REQUIRED);
+    }
+
+    proc K::test_bind_q_requires_contract() -> UInt32 {
+        let cap = pack_capability_handle(4401, DOMAIN_K, CAP_TRANSITION + CAP_CALL_Q + CAP_CONTRACT_BIND);
+        let status = runtime_bind_process_domain(7, DOMAIN_K, DOMAIN_Q, cap, 0, 10);
+        return expect_status(status, ERR_CONTRACT_REQUIRED);
+    }
+
+    proc K::test_bind_q_success() -> UInt32 {
+        let cap = pack_capability_handle(4402, DOMAIN_K, CAP_TRANSITION + CAP_CALL_Q + CAP_CONTRACT_BIND);
+        let contract_handle = pack_resource_contract_handle(8800, DOMAIN_Q, 1, 30, 1);
+        let status = runtime_bind_process_domain(7, DOMAIN_K, DOMAIN_Q, cap, contract_handle, 10);
+        return expect_status(status, ERR_OK);
+    }
+
+    proc K::test_xdv_call_permission_denied() -> UInt32 {
+        let cap = pack_capability_handle(4403, DOMAIN_K, CAP_CALL_Q);
+        let contract_handle = pack_resource_contract_handle(8801, DOMAIN_Q, 1, 30, 1);
+        let status = runtime_xdv_call(DOMAIN_K, DOMAIN_Q, 55, cap, contract_handle, 10, 0, 0);
+        return expect_status(status, ERR_CAPABILITY_UNAUTHORIZED);
+    }
+
+    proc K::test_xdv_call_replay_override() -> UInt32 {
+        let cap = pack_capability_handle(4404, DOMAIN_K, CAP_CALL_Q + CAP_CONTRACT_BIND);
+        let contract_handle = pack_resource_contract_handle(8802, DOMAIN_Q, 1, 30, 1);
+        let status = runtime_xdv_call(DOMAIN_K, DOMAIN_Q, 55, cap, contract_handle, 10, 1, ERR_COHERENCE_VIOLATION);
+        return expect_status(status, ERR_COHERENCE_VIOLATION);
+    }
+
+    proc K::test_ipc_result_fields() -> UInt32 {
+        let cap = pack_capability_handle(4405, DOMAIN_K, CAP_IPC + CAP_CALL_Q);
+        let contract_handle = pack_resource_contract_handle(8803, DOMAIN_Q, 1, 30, 1);
+        let packed = runtime_send_cross_domain_ipc(10, 11, DOMAIN_K, DOMAIN_Q, 100, 64, cap, contract_handle, 10, 0, 0);
+
+        let status = ipc_result_status(packed);
+        let event_id = ipc_result_event_id(packed);
+        let cost = ipc_result_crossing_cost(packed);
+
+        if status == ERR_OK {
+            if event_id > 0 {
+                if cost > 0 {
+                    return TEST_PASS;
+                } else {
+                    return TEST_FAIL;
+                }
+            } else {
+                return TEST_FAIL;
+            }
+        } else {
+            return TEST_FAIL;
+        }
+    }
+
+    proc K::test_syscall_pack_unpack() -> UInt32 {
+        let cap = pack_capability_handle(4406, DOMAIN_K, CAP_SYSCALL + CAP_CALL_K);
+        let packed = runtime_syscall(9, 5, cap, 3, 0, 0);
+
+        let status = syscall_result_status(packed);
+        let value = syscall_result_value(packed);
+
+        if status == ERR_OK {
+            if value > 0 {
+                return TEST_PASS;
+            } else {
+                return TEST_FAIL;
+            }
+        } else {
+            return TEST_FAIL;
+        }
+    }
+
+    proc K::test_transition_requires_attestation() -> UInt32 {
+        let cap = pack_capability_handle(4407, DOMAIN_K, CAP_TRANSITION + CAP_CALL_PHI + CAP_CONTRACT_BIND);
+        let contract_handle = pack_resource_contract_handle(8804, DOMAIN_PHI, 1, 30, 1);
+        let status = runtime_transition_request(10, DOMAIN_K, DOMAIN_PHI, 70, cap, contract_handle, 10, 0, 0, 0);
+        return expect_status(status, ERR_DOMAIN_UNAUTHORIZED);
+    }
+
+    proc K::test_context_creation_and_anchor() -> UInt32 {
+        let cap = pack_capability_handle(4408, DOMAIN_K, CAP_TRANSITION + CAP_CALL_K);
+        let context = runtime_create_hybrid_process_context(
+            9,
+            2,
+            PROCESS_CREATED,
+            PROCESS_INITIALIZED,
+            3,
+            DOMAIN_K,
+            DOMAIN_K,
+            cap,
+            0,
+            10
+        );
+
+        if context == 0 {
+            return TEST_FAIL;
+        }
+
+        let anchored = process_context_is_k_anchored(context);
+        let lifecycle = process_context_lifecycle(context);
+
+        if anchored == 1 {
+            if lifecycle == PROCESS_INITIALIZED {
+                return TEST_PASS;
+            } else {
+                return TEST_FAIL;
+            }
+        } else {
+            return TEST_FAIL;
+        }
+    }
+
     proc K::run_all_tests() -> UInt32 {
-        return 0;
+        let t1 = test_capability_handle_roundtrip();
+        if t1 == TEST_PASS {
+            let t2 = test_contract_handle_active_window();
+            if t2 == TEST_PASS {
+                let t3 = test_bind_requires_k_anchor();
+                if t3 == TEST_PASS {
+                    let t4 = test_bind_q_requires_contract();
+                    if t4 == TEST_PASS {
+                        let t5 = test_bind_q_success();
+                        if t5 == TEST_PASS {
+                            let t6 = test_xdv_call_permission_denied();
+                            if t6 == TEST_PASS {
+                                let t7 = test_xdv_call_replay_override();
+                                if t7 == TEST_PASS {
+                                    let t8 = test_ipc_result_fields();
+                                    if t8 == TEST_PASS {
+                                        let t9 = test_syscall_pack_unpack();
+                                        if t9 == TEST_PASS {
+                                            let t10 = test_transition_requires_attestation();
+                                            if t10 == TEST_PASS {
+                                                let t11 = test_context_creation_and_anchor();
+                                                if t11 == TEST_PASS {
+                                                    return TEST_PASS;
+                                                } else {
+                                                    return TEST_FAIL;
+                                                }
+                                            } else {
+                                                return TEST_FAIL;
+                                            }
+                                        } else {
+                                            return TEST_FAIL;
+                                        }
+                                    } else {
+                                        return TEST_FAIL;
+                                    }
+                                } else {
+                                    return TEST_FAIL;
+                                }
+                            } else {
+                                return TEST_FAIL;
+                            }
+                        } else {
+                            return TEST_FAIL;
+                        }
+                    } else {
+                        return TEST_FAIL;
+                    }
+                } else {
+                    return TEST_FAIL;
+                }
+            } else {
+                return TEST_FAIL;
+            }
+        } else {
+            return TEST_FAIL;
+        }
     }
 }

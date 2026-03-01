@@ -1,78 +1,65 @@
-﻿# runtime_process
+# runtime_process
 
 - Source: `xdv-runtime/src/runtime_process.ds`
 - Kind: Runtime Module
-- Summary: Runtime Process - Wraps dustlib_k::threading
+- Summary: Hybrid Runtime ABI bindings, capability/contract-aware call layer, replay/telemetry hooks.
 
 ## Purpose
-Runtime Process - Wraps dustlib_k::threading
+`runtime_process` provides the process/domain ABI surface required for hybrid user-space execution:
+- Process context + lifecycle validation
+- Capability and resource contract handle validation
+- Explicit cross-domain call validation (`runtime_xdv_call`, IPC, transition)
+- Replay override hooks and deterministic telemetry/event emission
 
-## Forge Overview
-| Forge | Constants | Procedures |
-|---|---:|---:|
-| `RuntimeProcess` | 7 | 8 |
-| `RuntimeProcessErrors` | 8 | 0 |
+## Key APIs
+- ABI and features:
+  - `runtime_abi_init()`
+  - `hr_abi_version_major/minor/patch()`
+  - `hr_abi_feature_flags()`
 
-## API By Forge
-### RuntimeProcess
+- Capability handles:
+  - `pack_capability_handle(...)`
+  - `capability_handle_domain(...)`
+  - `capability_handle_flags(...)`
+  - `capability_handle_raw_id(...)`
 
-#### Procedures
-| Domain | Procedure | Parameters | Returns | Description |
-|---|---|---|---|---|
-| `K` | `spawn` | `entry: UInt64, stack_size: UInt32` | `UInt32` | Performs spawn operation. |
-| `K` | `join` | `pid: UInt32` | `UInt64` | Performs join operation. |
-| `K` | `exit` | `pid: UInt32, code: UInt32` | `UInt32` | Performs exit operation. |
-| `K` | `getpid` | `(none)` | `UInt32` | Performs getpid operation. |
-| `K` | `sleep` | `ms: UInt32` | `UInt32` | Performs sleep operation. |
-| `K` | `yield` | `(none)` | `UInt32` | Performs yield operation. |
-| `K` | `spawn_with_limit` | `entry: UInt64, stack_size: UInt32, pid_limit: UInt32` | `UInt32` | Performs spawn with limit operation. |
-| `K` | `is_valid_pid` | `pid: UInt32` | `UInt32` | Performs is valid pid operation. |
+- Resource contract handles:
+  - `pack_resource_contract_handle(...)`
+  - `contract_is_active_at(...)`
+  - `validate_contract_for_target(...)`
 
-#### Constants
-| Constant | Type | Value |
-|---|---|---|
-| `MAX_PROCESSES` | `UInt32` | `256` |
-| `INIT_PID` | `UInt32` | `1` |
-| `MIN_STACK_SIZE` | `UInt32` | `4096` |
-| `MAX_STACK_SIZE` | `UInt32` | `1048576` |
-| `PID_BASE_SEED` | `UInt32` | `17` |
-| `NULL_PID` | `UInt32` | `0` |
-| `THREAD_OK` | `UInt32` | `0` |
+- Process context:
+  - `pack_process_context(...)`
+  - `process_context_*` accessors
+  - `runtime_create_hybrid_process_context(...)`
 
-### RuntimeProcessErrors
+- Cross-domain runtime calls:
+  - `runtime_bind_process_domain(...)`
+  - `runtime_transition_request(...)`
+  - `runtime_xdv_call(...)`
+  - `runtime_send_cross_domain_ipc(...)`
+  - `runtime_syscall(...)`
 
-#### Procedures
-- No `proc` entries in this forge.
+- Replay and telemetry:
+  - `runtime_record_event(...)`
+  - `runtime_emit_telemetry(...)`
+  - `runtime_apply_replay_outcome(...)`
 
-#### Constants
-| Constant | Type | Value |
-|---|---|---|
-| `ERR_OK` | `UInt32` | `0` |
-| `ERR_SPAWN_FAILED` | `UInt32` | `1` |
-| `ERR_JOIN_FAILED` | `UInt32` | `2` |
-| `ERR_INVALID_PID` | `UInt32` | `3` |
-| `ERR_PROCESS_NOT_FOUND` | `UInt32` | `4` |
-| `ERR_OUT_OF_PIDS` | `UInt32` | `5` |
-| `ERR_SLEEP_FAILED` | `UInt32` | `6` |
-| `ERR_DOMAIN_NOT_AVAILABLE` | `UInt32` | `100` |
+## Compatibility Wrappers
+Legacy process wrappers are retained with parser-safe names:
+- `spawn_process(...)`, `join_process(...)`, `exit_process(...)`
+- `get_pid()`, `sleep_process(...)`, `yield_process()`
+- `spawn_process_with_limit(...)`, `validate_pid(...)`
 
-## Runtime Dependencies
-- Detected dependency call usage:
-- `process_init(...)`
-- `thread_join(...)`
-- `thread_sleep(...)`
-- `thread_spawn(...)`
+## Error Model
+Includes deterministic runtime-domain errors:
+- capability/contract invalid or unauthorized
+- transition rollback
+- domain unauthorized
+- decoherence/coherence violations
+- replay/telemetry invalid signaling
 
 ## Integration Notes
-- Runtime modules provide K-domain implementation with Q/Phi behavior gated by runtime availability policy where applicable.
-- This module is intended for production runtime linkage and direct use by xdv-os components.
-
-## Example (DPL)
-```dust
-let status = spawn(1, 512);
-if status == 0 {
-    emit "ok";
-} else {
-    emit "failed";
-}
-```
+- Q/Phi calls require active contract handles in target domain.
+- Capability flags are enforced at every call boundary.
+- Replay mode can deterministically override runtime outcomes without changing call flow.

@@ -22,10 +22,9 @@ forge RuntimeIo {
     const MODE_APPEND: UInt32 = 2;
 
     const NULL_HANDLE: UInt64 = 0;
-
     const IO_OK: UInt32 = 0;
 
-    proc K::open(path: UInt64, mode: UInt32) -> UInt64 {
+    proc K::open_file(path: UInt64, mode: UInt32) -> UInt64 {
         if path == 0 {
             return NULL_HANDLE;
         } else {
@@ -37,7 +36,7 @@ forge RuntimeIo {
         }
     }
 
-    proc K::read(fd: UInt64, buffer: UInt64, size: UInt32) -> UInt32 {
+    proc K::read_file(fd: UInt64, buffer: UInt64, size: UInt32) -> UInt32 {
         if fd == NULL_HANDLE {
             return ERR_INVALID_HANDLE;
         } else {
@@ -58,7 +57,7 @@ forge RuntimeIo {
         }
     }
 
-    proc K::write(fd: UInt64, buffer: UInt64, size: UInt32) -> UInt32 {
+    proc K::write_file(fd: UInt64, buffer: UInt64, size: UInt32) -> UInt32 {
         if fd == NULL_HANDLE {
             return ERR_INVALID_HANDLE;
         } else {
@@ -79,7 +78,7 @@ forge RuntimeIo {
         }
     }
 
-    proc K::close(fd: UInt64) -> UInt32 {
+    proc K::close_file(fd: UInt64) -> UInt32 {
         if fd == NULL_HANDLE {
             return ERR_INVALID_HANDLE;
         } else {
@@ -92,5 +91,3 @@ forge RuntimeIo {
         }
     }
 }
-
-

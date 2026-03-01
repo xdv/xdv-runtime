@@ -3,8 +3,8 @@
 
 [workspace]
 name = "xdv_runtime"
-version = "0.2.0"
-description = "XDV Runtime - User space runtime for XDV OS"
+version = "0.3.0"
+description = "XDV Runtime - Hybrid ABI runtime with capability/contract-aware domain calls and deterministic replay/telemetry hooks"
 
 [sector]
 name = "xdv_runtime"
@@ -18,4 +18,3 @@ dustlib_k = { path = "../dustlib-k" }
 [target.x64-pc-none]
 linker = "ld"
 linker_flags = ["-nostdlib", "-static"]
-

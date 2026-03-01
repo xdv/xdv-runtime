@@ -27,6 +27,13 @@ forge RuntimeInit {
     const SIG_REAP: UInt32 = 1;
     const SIG_TERM: UInt32 = 15;
 
+    const DOMAIN_K: UInt32 = 0;
+
+    const PROCESS_CREATED: UInt32 = 1;
+    const PROCESS_INITIALIZED: UInt32 = 2;
+
+    const INIT_AFFINITY_MASK: UInt32 = 1;
+
     proc K::main() -> UInt32 {
         let base_init = runtime_init();
         if base_init == ERR_OK {
@@ -36,7 +43,17 @@ forge RuntimeInit {
                 if scheduler_status == ERR_OK {
                     let fs_status = init_fs();
                     if fs_status == ERR_OK {
-                        return spawn_shell();
+                        let abi_status = init_runtime_abi_bindings();
+                        if abi_status == ERR_OK {
+                            let hook_status = init_runtime_hooks();
+                            if hook_status == ERR_OK {
+                                return spawn_shell();
+                            } else {
+                                return ERR_INIT_FAILED;
+                            }
+                        } else {
+                            return ERR_INIT_FAILED;
+                        }
                     } else {
                         return ERR_INIT_FAILED;
                     }
@@ -78,8 +95,55 @@ forge RuntimeInit {
         }
     }
 
+    proc K::init_runtime_abi_bindings() -> UInt32 {
+        let init_capability = pack_capability_handle(5001, DOMAIN_K, 17);
+        if init_capability == 0 {
+            return ERR_INIT_FAILED;
+        }
+
+        let context = runtime_create_hybrid_process_context(
+            INIT_PID,
+            1,
+            PROCESS_CREATED,
+            PROCESS_INITIALIZED,
+            INIT_AFFINITY_MASK,
+            DOMAIN_K,
+            DOMAIN_K,
+            init_capability,
+            0,
+            1
+        );
+
+        if context == 0 {
+            return ERR_INIT_FAILED;
+        }
+
+        let anchored = process_context_is_k_anchored(context);
+        if anchored == 1 {
+            emit "xdv-runtime-init: process/domain abi bindings ready";
+            return ERR_OK;
+        } else {
+            return ERR_INIT_FAILED;
+        }
+    }
+
+    proc K::init_runtime_hooks() -> UInt32 {
+        let event_id = runtime_record_event(7, 0, 1, INIT_PID, DOMAIN_K, DOMAIN_K, 0, 0);
+        if event_id > 0 {
+            let metric_id = runtime_emit_telemetry(92, DOMAIN_K, event_id, 1);
+            if metric_id > 0 {
+                emit "xdv-runtime-init: replay and telemetry hooks active";
+                return ERR_OK;
+            } else {
+                return ERR_INIT_FAILED;
+            }
+        } else {
+            return ERR_INIT_FAILED;
+        }
+    }
+
     proc K::spawn_shell() -> UInt32 {
-        let pid = spawn(INIT_PID, INIT_STACK_SIZE);
+        let pid = spawn_process(INIT_PID, INIT_STACK_SIZE);
         if pid == NULL_PID {
             return ERR_FORK_FAILED;
         } else {
@@ -91,7 +155,7 @@ forge RuntimeInit {
         if pid == NULL_PID {
             return ERR_WAIT_FAILED;
         } else {
-            let join_result = join(pid);
+            let join_result = join_process(pid);
             if join_result == NULL_PID {
                 return ERR_WAIT_FAILED;
             } else {

@@ -1,10 +1,78 @@
 // File: runtime_init_tests.ds - This file is part of XDV
 // Copyright (c) 2026 Dust LLC, and Contributors
 // Description:
-//   normalized test harness for parser compatibility.
+//   Runtime init ABI binding and hook tests.
 
 forge RuntimeInitTests {
+    const TEST_PASS: UInt32 = 0;
+    const TEST_FAIL: UInt32 = 1;
+
+    const ERR_OK: UInt32 = 0;
+    const ERR_SIGNAL_UNSUPPORTED: UInt32 = 5;
+
+    const SIG_NOP: UInt32 = 0;
+    const SIG_REAP: UInt32 = 1;
+    const SIG_TERM: UInt32 = 15;
+
+    proc K::expect_status(actual: UInt32, expected: UInt32) -> UInt32 {
+        if actual == expected {
+            return TEST_PASS;
+        } else {
+            return TEST_FAIL;
+        }
+    }
+
+    proc K::test_init_runtime_abi_bindings() -> UInt32 {
+        let status = init_runtime_abi_bindings();
+        return expect_status(status, ERR_OK);
+    }
+
+    proc K::test_init_runtime_hooks() -> UInt32 {
+        let status = init_runtime_hooks();
+        return expect_status(status, ERR_OK);
+    }
+
+    proc K::test_handle_signal_supported() -> UInt32 {
+        let s1 = handle_signal(SIG_NOP);
+        if s1 == ERR_OK {
+            let s2 = handle_signal(SIG_REAP);
+            if s2 == ERR_OK {
+                let s3 = handle_signal(SIG_TERM);
+                return expect_status(s3, ERR_OK);
+            } else {
+                return TEST_FAIL;
+            }
+        } else {
+            return TEST_FAIL;
+        }
+    }
+
+    proc K::test_handle_signal_unsupported() -> UInt32 {
+        let status = handle_signal(9);
+        return expect_status(status, ERR_SIGNAL_UNSUPPORTED);
+    }
+
     proc K::run_all_tests() -> UInt32 {
-        return 0;
+        let t1 = test_init_runtime_abi_bindings();
+        if t1 == TEST_PASS {
+            let t2 = test_init_runtime_hooks();
+            if t2 == TEST_PASS {
+                let t3 = test_handle_signal_supported();
+                if t3 == TEST_PASS {
+                    let t4 = test_handle_signal_unsupported();
+                    if t4 == TEST_PASS {
+                        return TEST_PASS;
+                    } else {
+                        return TEST_FAIL;
+                    }
+                } else {
+                    return TEST_FAIL;
+                }
+            } else {
+                return TEST_FAIL;
+            }
+        } else {
+            return TEST_FAIL;
+        }
     }
 }

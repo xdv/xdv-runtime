@@ -1,10 +1,98 @@
 // File: runtime_scheduler_tests.ds - This file is part of XDV
 // Copyright (c) 2026 Dust LLC, and Contributors
 // Description:
-//   normalized test harness for parser compatibility.
+//   Runtime scheduler deterministic behavior tests.
 
 forge RuntimeSchedulerTests {
+    const TEST_PASS: UInt32 = 0;
+    const TEST_FAIL: UInt32 = 1;
+
+    const ERR_OK: UInt32 = 0;
+    const ERR_INVALID_PRIORITY: UInt32 = 2;
+
+    const DEFAULT_PRIORITY: UInt32 = 5;
+
+    proc K::expect_status(actual: UInt32, expected: UInt32) -> UInt32 {
+        if actual == expected {
+            return TEST_PASS;
+        } else {
+            return TEST_FAIL;
+        }
+    }
+
+    proc K::test_default_priority() -> UInt32 {
+        let priority = default_priority();
+        if priority == DEFAULT_PRIORITY {
+            return TEST_PASS;
+        } else {
+            return TEST_FAIL;
+        }
+    }
+
+    proc K::test_set_priority_bounds() -> UInt32 {
+        let status = set_priority(1, 11);
+        return expect_status(status, ERR_INVALID_PRIORITY);
+    }
+
+    proc K::test_add_task_rejects_null_pid() -> UInt32 {
+        let status = add_task(0, 1);
+        if status == 1 {
+            return TEST_PASS;
+        } else {
+            return TEST_FAIL;
+        }
+    }
+
+    proc K::test_schedule_returns_current_task() -> UInt32 {
+        let scheduled = schedule();
+        if scheduled > 0 {
+            return TEST_PASS;
+        } else {
+            return TEST_FAIL;
+        }
+    }
+
+    proc K::test_init_start_stop() -> UInt32 {
+        let init_status = init();
+        if init_status == ERR_OK {
+            let start_status = start();
+            if start_status == ERR_OK {
+                let stop_status = stop();
+                return expect_status(stop_status, ERR_OK);
+            } else {
+                return TEST_FAIL;
+            }
+        } else {
+            return TEST_FAIL;
+        }
+    }
+
     proc K::run_all_tests() -> UInt32 {
-        return 0;
+        let t1 = test_default_priority();
+        if t1 == TEST_PASS {
+            let t2 = test_set_priority_bounds();
+            if t2 == TEST_PASS {
+                let t3 = test_add_task_rejects_null_pid();
+                if t3 == TEST_PASS {
+                    let t4 = test_schedule_returns_current_task();
+                    if t4 == TEST_PASS {
+                        let t5 = test_init_start_stop();
+                        if t5 == TEST_PASS {
+                            return TEST_PASS;
+                        } else {
+                            return TEST_FAIL;
+                        }
+                    } else {
+                        return TEST_FAIL;
+                    }
+                } else {
+                    return TEST_FAIL;
+                }
+            } else {
+                return TEST_FAIL;
+            }
+        } else {
+            return TEST_FAIL;
+        }
     }
 }

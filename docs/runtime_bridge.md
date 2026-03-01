@@ -1,52 +1,31 @@
-﻿# runtime_bridge
+# runtime_bridge
 
 - Source: `xdv-runtime/src/runtime_bridge.ds`
 - Kind: Runtime Module
-- Summary: xdv-runtime bridge for xdv-os boot profile (codegen-safe subset).
+- Summary: Boot/userspace bridge with ABI assertion and runtime call-path probes.
 
 ## Purpose
-xdv-runtime bridge for xdv-os boot profile (codegen-safe subset).
+Bridge module used by kernel boot flow to initialize runtime services while preserving existing bridge contract compatibility.
 
-## Forge Overview
-| Forge | Constants | Procedures |
-|---|---:|---:|
-| `XdvRuntimeBridge` | 3 | 6 |
+## Contract
+- `runtime_bridge_version()` remains `5`.
+- Init path asserts HR-ABI major/minor compatibility.
+- Init path probes:
+  - capability/contract-aware runtime call path
+  - replay hook readiness
+  - telemetry hook readiness
 
-## API By Forge
-### XdvRuntimeBridge
-
-#### Procedures
-| Domain | Procedure | Parameters | Returns | Description |
-|---|---|---|---|---|
-| `K` | `init` | `(none)` | `UInt32` | Performs init operation. |
-| `K` | `start_userspace` | `(none)` | `UInt32` | Performs start userspace operation. |
-| `K` | `bridge_runtime_init` | `(none)` | `UInt32` | Performs bridge runtime init operation. |
-| `K` | `bridge_runtime_main` | `(none)` | `UInt32` | Performs bridge runtime main operation. |
-| `K` | `runtime_bridge_healthcheck` | `(none)` | `UInt32` | Performs runtime bridge healthcheck operation. |
-| `K` | `shell_bootstrap` | `(none)` | `UInt32` | Performs shell bootstrap operation. |
-
-#### Constants
-| Constant | Type | Value |
-|---|---|---|
-| `BRIDGE_VERSION` | `UInt32` | `5` |
-| `RUNTIME_OK` | `UInt32` | `0` |
-| `SHELL_OK` | `UInt32` | `0` |
-
-## Runtime Dependencies
-- Detected dependency call usage:
-- `shell_bridge_init(...)`
-- `shell_bridge_launch(...)`
+## Key Procedures
+- `init()`
+- `start_userspace()`
+- `bridge_runtime_init()`
+- `bridge_runtime_main()`
+- `runtime_abi_contract_assert()`
+- `runtime_contract_capability_call_probe()`
+- `runtime_replay_hook_online()`
+- `runtime_telemetry_hook_online()`
+- `shell_bootstrap()`
 
 ## Integration Notes
-- Runtime modules provide K-domain implementation with Q/Phi behavior gated by runtime availability policy where applicable.
-- This module is intended for production runtime linkage and direct use by xdv-os components.
-
-## Example (DPL)
-```dust
-let status = init();
-if status == 0 {
-    emit "ok";
-} else {
-    emit "failed";
-}
-```
+- Designed for codegen-safe boot runtime usage.
+- Emits deterministic status logs for ABI and hook activation milestones.

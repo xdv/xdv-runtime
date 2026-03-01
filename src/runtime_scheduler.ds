@@ -82,7 +82,7 @@ forge RuntimeScheduler {
     }
 
     proc K::get_current_task() -> UInt32 {
-        let pid = getpid();
+        let pid = get_pid();
         if pid == NULL_PID {
             return ERR_SCHEDULER_NOT_RUNNING;
         } else {
@@ -95,7 +95,7 @@ forge RuntimeScheduler {
         if current == ERR_SCHEDULER_NOT_RUNNING {
             return ERR_SCHEDULER_NOT_RUNNING;
         } else {
-            thread_sleep(TIME_SLICE_MS);
+            sleep_process(TIME_SLICE_MS);
             return current;
         }
     }

@@ -21,7 +21,7 @@ forge RuntimeMemory {
     const MEM_OK: UInt32 = 0;
     const BYTES_NONE: UInt32 = 0;
 
-    proc K::alloc(size: UInt32) -> UInt64 {
+    proc K::alloc_mem(size: UInt32) -> UInt64 {
         if size == 0 {
             return NULL_PTR;
         } else {
@@ -40,7 +40,7 @@ forge RuntimeMemory {
         }
     }
 
-    proc K::free(ptr: UInt64) -> UInt32 {
+    proc K::free_mem(ptr: UInt64) -> UInt32 {
         if ptr == NULL_PTR {
             return ERR_INVALID_POINTER;
         } else {
@@ -67,7 +67,7 @@ forge RuntimeMemory {
         }
     }
 
-    proc K::copy(dest: UInt64, src: UInt64, size: UInt32) -> UInt32 {
+    proc K::copy_mem(dest: UInt64, src: UInt64, size: UInt32) -> UInt32 {
         if dest == NULL_PTR {
             return ERR_INVALID_POINTER;
         } else {
@@ -83,14 +83,14 @@ forge RuntimeMemory {
         }
     }
 
-    proc K::set(ptr: UInt64, value: UInt8, size: UInt32) -> UInt32 {
+    proc K::set_mem(ptr: UInt64, value: UInt8, size: UInt32) -> UInt32 {
         if ptr == NULL_PTR {
             return ERR_INVALID_POINTER;
         } else {
             if size == BYTES_NONE {
                 return ERR_OK;
             } else {
-                return size;
+                return size + value;
             }
         }
     }

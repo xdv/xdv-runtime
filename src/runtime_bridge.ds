@@ -5,8 +5,20 @@
 
 forge XdvRuntimeBridge {
     const BRIDGE_VERSION: UInt32 = 5;
+
     const RUNTIME_OK: UInt32 = 0;
-    const SHELL_OK: UInt32 = 0;
+    const RUNTIME_BOOT_ASSERT_FAILED: UInt32 = 1;
+    const RUNTIME_ABI_INCOMPATIBLE: UInt32 = 2;
+    const RUNTIME_CONTRACT_CALL_FAILED: UInt32 = 3;
+    const RUNTIME_REPLAY_HOOK_FAILED: UInt32 = 4;
+    const RUNTIME_TELEMETRY_HOOK_FAILED: UInt32 = 5;
+
+    const EXPECTED_HR_ABI_MAJOR: UInt32 = 0;
+    const EXPECTED_HR_ABI_MINOR: UInt32 = 1;
+
+    proc K::runtime_bridge_version() -> UInt32 {
+        return BRIDGE_VERSION;
+    }
 
     proc K::init() -> UInt32 {
         emit "xdv-runtime bridge online";
@@ -22,19 +34,119 @@ forge XdvRuntimeBridge {
 
     proc K::bridge_runtime_init() -> UInt32 {
         emit "xdv-runtime: init path linked";
-        runtime_bridge_healthcheck();
-        return RUNTIME_OK;
+
+        let abi_init = runtime_abi_init();
+        if abi_init == RUNTIME_OK {
+            let health = runtime_bridge_healthcheck();
+            if health == RUNTIME_OK {
+                let abi_assert = runtime_abi_contract_assert();
+                if abi_assert == RUNTIME_OK {
+                    let contract_probe = runtime_contract_capability_call_probe();
+                    if contract_probe == RUNTIME_OK {
+                        let replay_hook = runtime_replay_hook_online();
+                        if replay_hook == RUNTIME_OK {
+                            let telemetry_hook = runtime_telemetry_hook_online();
+                            if telemetry_hook == RUNTIME_OK {
+                                return RUNTIME_OK;
+                            } else {
+                                return telemetry_hook;
+                            }
+                        } else {
+                            return replay_hook;
+                        }
+                    } else {
+                        return contract_probe;
+                    }
+                } else {
+                    return abi_assert;
+                }
+            } else {
+                return health;
+            }
+        } else {
+            return RUNTIME_BOOT_ASSERT_FAILED;
+        }
     }
 
     proc K::bridge_runtime_main() -> UInt32 {
         emit "xdv-runtime: userspace handoff live";
         emit "xdv-runtime: handoff complete";
+        runtime_emit_telemetry(90, 0, 1, 1);
         return RUNTIME_OK;
     }
 
     proc K::runtime_bridge_healthcheck() -> UInt32 {
         emit "xdv-runtime: io memory process scheduler fs console string online";
+        emit "xdv-runtime: abi capability contract replay telemetry online";
         return RUNTIME_OK;
+    }
+
+    proc K::runtime_abi_contract_assert() -> UInt32 {
+        let major = hr_abi_version_major();
+        if major == EXPECTED_HR_ABI_MAJOR {
+            let minor = hr_abi_version_minor();
+            if minor == EXPECTED_HR_ABI_MINOR {
+                emit "xdv-runtime: hybrid runtime abi contract assertion passed";
+                return RUNTIME_OK;
+            } else {
+                emit "xdv-runtime: hybrid runtime abi minor assertion failed";
+                return RUNTIME_ABI_INCOMPATIBLE;
+            }
+        } else {
+            emit "xdv-runtime: hybrid runtime abi major assertion failed";
+            return RUNTIME_ABI_INCOMPATIBLE;
+        }
+    }
+
+    proc K::runtime_contract_capability_call_probe() -> UInt32 {
+        let local_cap = pack_capability_handle(1200, 0, 65);
+        if local_cap == 0 {
+            return RUNTIME_CONTRACT_CALL_FAILED;
+        }
+
+        let syscall_result = runtime_syscall(1, 1, local_cap, 1, 0, 0);
+        let syscall_status = syscall_result_status(syscall_result);
+        if syscall_status == RUNTIME_OK {
+            let cross_cap = pack_capability_handle(2200, 0, 34);
+            if cross_cap == 0 {
+                return RUNTIME_CONTRACT_CALL_FAILED;
+            }
+
+            let q_contract = pack_resource_contract_handle(3300, 1, 1, 20, 1);
+            if q_contract == 0 {
+                return RUNTIME_CONTRACT_CALL_FAILED;
+            }
+
+            let call_status = runtime_xdv_call(0, 1, 55, cross_cap, q_contract, 2, 0, 0);
+            if call_status == RUNTIME_OK {
+                emit "xdv-runtime: capability/contract call path active";
+                return RUNTIME_OK;
+            } else {
+                return RUNTIME_CONTRACT_CALL_FAILED;
+            }
+        } else {
+            return RUNTIME_CONTRACT_CALL_FAILED;
+        }
+    }
+
+    proc K::runtime_replay_hook_online() -> UInt32 {
+        let event_id = runtime_record_event(7, 0, 1, 1, 0, 0, 0, 0);
+        if event_id > 0 {
+            emit "xdv-runtime: replay hook online";
+            return RUNTIME_OK;
+        } else {
+            return RUNTIME_REPLAY_HOOK_FAILED;
+        }
+    }
+
+    proc K::runtime_telemetry_hook_online() -> UInt32 {
+        let metric_id = runtime_emit_telemetry(91, 0, 1, 1);
+        if metric_id > 0 {
+            emit "xdv-runtime: telemetry hook online";
+            return RUNTIME_OK;
+        } else {
+            return RUNTIME_TELEMETRY_HOOK_FAILED;
+        }
     }
 
     proc K::shell_bootstrap() -> UInt32 {
@@ -42,6 +154,6 @@ forge XdvRuntimeBridge {
         emit "xdv-runtime: preload packages xdv-os xdv-core xdv-edx xdv-shell";
         shell_bridge_init();
         shell_bridge_launch();
-        return SHELL_OK;
+        return RUNTIME_OK;
     }
 }

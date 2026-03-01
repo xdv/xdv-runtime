@@ -54,7 +54,7 @@ forge RuntimeFs {
         }
     }
 
-    proc K::open(path: UInt64, flags: UInt32) -> UInt64 {
+    proc K::open_file(path: UInt64, flags: UInt32) -> UInt64 {
         if path == 0 {
             return NULL_HANDLE;
         } else {
@@ -66,7 +66,7 @@ forge RuntimeFs {
         }
     }
 
-    proc K::read(fd: UInt64, buffer: UInt64, size: UInt32) -> UInt32 {
+    proc K::read_file(fd: UInt64, buffer: UInt64, size: UInt32) -> UInt32 {
         if fd == NULL_HANDLE {
             return ERR_READ_FAILED;
         } else {
@@ -87,7 +87,7 @@ forge RuntimeFs {
         }
     }
 
-    proc K::write(fd: UInt64, buffer: UInt64, size: UInt32) -> UInt32 {
+    proc K::write_file(fd: UInt64, buffer: UInt64, size: UInt32) -> UInt32 {
         if fd == NULL_HANDLE {
             return ERR_WRITE_FAILED;
         } else {
@@ -108,7 +108,7 @@ forge RuntimeFs {
         }
     }
 
-    proc K::close(fd: UInt64) -> UInt32 {
+    proc K::close_file(fd: UInt64) -> UInt32 {
         if fd == NULL_HANDLE {
             return ERR_CLOSE_FAILED;
         } else {
@@ -153,7 +153,7 @@ forge RuntimeFs {
         }
     }
 
-    proc K::unlink(path: UInt64) -> UInt32 {
+    proc K::unlink_path(path: UInt64) -> UInt32 {
         if path == 0 {
             return ERR_NOT_FOUND;
         } else {

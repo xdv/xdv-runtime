@@ -1,26 +1,37 @@
 # xdv-runtime
 
-User Space Runtime for XDV OS.
+Hybrid user-space runtime for XDV OS.
 
-## Overview
+## Specification Alignment
+- `XDV-020` Hybrid Process Model
+- `XDV-021` Cross-Domain IPC
+- `XDV-022` Domain Transition Protocol
+- `XDV-023` Domain Resource Contracts
+- `XDV-052` Hybrid Runtime ABI
+- `XDV-081` Hybrid Runtime Reference
 
-The XDV Runtime provides the user space environment for XDV OS, wrapping `dustlib` and `dustlib_k` to provide:
+## Implemented Runtime Contracts
 
-- I/O operations
-- Memory management
-- String utilities
-- Process management
-- Task scheduling
-- File system interface
-- Console I/O
-- Init process (PID 1)
+### 1) Process / Domain ABI bindings
+- Stable runtime ABI version exports (`hr_abi_version_*`, feature flags)
+- K-anchored hybrid process context encoding/decoding
+- Lifecycle-state and transition validation
+- Explicit process-domain binding validation
 
-## Architecture
+### 2) Capability / Contract-aware runtime calls
+- Capability-handle packing and validation (domain + flags + raw id)
+- Resource-contract handle packing and active-window checks
+- Explicit `runtime_xdv_call(...)` and `runtime_send_cross_domain_ipc(...)`
+- Deterministic `runtime_syscall(...)` result packing
+- Contract enforcement for Q/Phi domain invocation
 
-This runtime targets K-Domain operation on classical x86-64 hardware. Q and Phi domain requests are hardware-gated and return `ERR_DOMAIN_NOT_AVAILABLE (100)` when unavailable.
+### 3) Replay + telemetry hooks
+- Deterministic runtime event recording (`runtime_record_event`)
+- Replay override path (`runtime_apply_replay_outcome`)
+- Runtime telemetry emission (`runtime_emit_telemetry`)
+- Transition and IPC call paths instrumented with telemetry/event hooks
 
-## Source Files
-
+## Source Layout
 ```text
 src/
 |- runtime_bridge.ds
@@ -35,26 +46,16 @@ src/
 `- *_tests.ds
 ```
 
-## Domain Support
+## Runtime Bridge Compatibility
+- `runtime_bridge_version()` remains `5` for current kernel contract compatibility.
+- Bridge init now asserts runtime ABI contract and probes capability/contract call path.
 
-| Domain | Status |
-|--------|--------|
-| K      | Full implementation |
-| Q      | Hardware-gated (returns `ERR_DOMAIN_NOT_AVAILABLE` when unavailable) |
-| Phi    | Hardware-gated (returns `ERR_DOMAIN_NOT_AVAILABLE` when unavailable) |
+## Build
+`dust check xdv-runtime/src`
 
-## Error Codes
+## Test
+`dust test xdv-runtime/tests`
 
-- `0`: Success
-- `1-99`: Module-specific errors
-- `100`: Domain not available on this hardware
-
-## Dependencies
-
-- `dustlib` (`../dustlib`)
-- `dustlib_k` (`../dustlib-k`)
-
-## Version
-
-`0.2.0`
-
+## Notes
+- This runtime models deterministic contract/capability enforcement without exposing raw Q/Phi state.
+- Domain-specific failures use stable error-code semantics in `runtime_process.ds`.
